@@ -19,5 +19,5 @@ setup(
     maintainer_email='james.quigley@st-hildas.ox.ac.uk',
     description='Multilevel Radial Basis Function Approximation of PDEs.',
     license='MIT',
-    python_requires=">=3.8",
+    python_requires=">=3.10",
 )
