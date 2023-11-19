@@ -7,7 +7,7 @@ setup(
     name='radiant',
     version='0.0.0',
     packages=[
-        'radiate',
+        'radiant',
     ],
     install_requires=[
         'setuptools',
