@@ -1,12 +1,5 @@
-from collections.abc import Callable
-from typing import TypeAlias
-from numpy import sum
-from numpy.typing import NDArray
+from .typing import Function
 from numpy.polynomial.legendre import leggauss
-
-
-# Declare a function type
-Function: TypeAlias = Callable[[NDArray], NDArray]
 
 
 def gauss_legendre(f: Function, a: float, b: float, n: int) -> float:
