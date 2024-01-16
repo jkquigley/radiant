@@ -37,12 +37,14 @@ for i, xi in enumerate(points):
         a, b, 150
     )
 
-    for j, xj in enumerate(points):
+    for j, xj in enumerate(points[:i+1]):
         A[i, j] = gauss_legendre(
             lambda x: phi(np.abs(x - xi) / delta, 1) * phi(
                 np.abs(x - xj) / delta, 1),
             a, b, 4
         )
+
+A += np.tril(A, -1).T
 
 alphas = np.linalg.solve(A, fs)
 
@@ -62,3 +64,4 @@ plt.legend()
 plt.show()
 
 print(np.linalg.cond(A))
+print(alphas)
