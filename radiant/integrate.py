@@ -1,8 +1,11 @@
-from .typing import Function
 from numpy.polynomial.legendre import leggauss
+from typing import Callable
 
 
-def gauss_legendre(f: Function, a: float, b: float, n: int) -> float:
+# TODO: Fix bugs causing large errors with various ns.
+def gauss_legendre(
+        f: Callable, a: float, b: float, n: int
+) -> float:
     """
     Approximate the integral of :math:`f` from :math:`a` to :math:`b` using
     the Gauss-Legendre quadrature method.

@@ -1,67 +1,42 @@
-###################
-# Solves -u'' = f #
-###################
-from radiant import phi_factory
-from radiant import gauss_legendre
+##############################
+# Solves -u'' + u = f        #
+# With zero Neumann boundary #
+##############################
+import radiant as rad
 import numpy as np
-import matplotlib.pylab as plt
+
 
 # Problem Parameters
 a = 0
-b = 1
+b = 2 * np.pi
 
 
 def u(x):
-    return - np.sin(x * (2 * np.pi) / (b - a))
+    return np.cos(x * 2 * np.pi / (b - a))
 
 
 def f(x):
-    return ((2 * np.pi) / (b - a)) ** 2 * u(x)
+    return ((2 * np.pi / (b - a)) ** 2 + 1) * np.cos(x * 2 * np.pi / (b - a))
 
 
-# Algorithm Parameters
-N = 4
-delta = 4 * (b - a) / N
-points = np.linspace(a, b, N)
-A = np.zeros((points.size, points.size))
-fs = np.zeros_like(points)
-
-# RBF Parameters
+# Parameters
+N = 21
 d = 1
 k = 1
-phi = phi_factory(d, k)
+delta = 2 * (b - a) / np.pi
 
-for i, xi in enumerate(points):
-    fs[i] = gauss_legendre(
-        lambda x: f(x) * phi(np.abs(x - xi) / delta),
-        a, b, 150
-    )
+phi, points, A, fs = rad.generate(a, b, f, N, d, k, delta)
 
-    for j, xj in enumerate(points[:i+1]):
-        A[i, j] = gauss_legendre(
-            lambda x: phi(np.abs(x - xi) / delta, 1) * phi(
-                np.abs(x - xj) / delta, 1),
-            a, b, 4
-        )
+# Solve for approximate solution
+u_approx, alphas = rad.solve(phi, points, A, fs)
+error = rad.error(u, u_approx, a, b)
 
-A += np.tril(A, -1).T
-
-alphas = np.linalg.solve(A, fs)
+print("L2 Relative Error:", error)
+print("System condition number:", np.linalg.cond(A))
 
 
-def u_approx(x):
-    val = 0
-    for a, xi in zip(alphas, points):
-        val += a * phi(np.abs(x - xi) / delta)
-
-    return val
-
-
-xs = np.linspace(a, b, 100)
-plt.plot(xs, u(xs), label="Exact")
-plt.plot(xs, u_approx(xs), label="Approx")
-plt.legend()
-plt.show()
-
-print(np.linalg.cond(A))
-print(alphas)
+# TODO:
+# Look at cond number
+#   - Fix delta change N
+#   - Fix N look at delta
+# Multilevel algorithm for plain vanilla function approx
