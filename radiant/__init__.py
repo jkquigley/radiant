@@ -1,12 +1,14 @@
 __all__ = [
-    "error",
-    "generate",
-    "solve",
+    "integrate",
     "plot",
+    "phi_factory",
+    "combine",
+    "error",
 ]
 
 
-from .system import error
-from .system import generate
-from .system import solve
+from .integrate import integrate
 from .plot import plot
+from .rbf import phi_factory
+from .util import combine
+from .util import error
