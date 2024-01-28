@@ -1,20 +1,57 @@
 from .integrate import integrate
-from .rbf import phi_factory
 from numpy.typing import NDArray
 import numpy as np
 from typing import Callable
+from typing import List
+from dataclasses import dataclass
 
 
-def combine(
-        phi: Callable, centres: NDArray, weights: NDArray
-) -> Callable:
-    if centres.size != weights.size:
-        raise ValueError("Every centre must have a corresponding weight.")
+@dataclass
+class RBFParams:
+    phi: Callable
+    cs: NDArray
+    ws: NDArray
+    d: float
 
-    def func(x: NDArray):
-        return np.sum(np.multiply(weights[:, None], phi(x, centres)), axis=0)
 
-    return func
+class Approximant:
+    def __init__(self, params: None | RBFParams | List[RBFParams] = None):
+        if params is None:
+            params = []
+        elif isinstance(params, RBFParams):
+            params = [params]
+
+        self.params = params
+
+    def __call__(self, x, end=None):
+        if end is None:
+            end = len(self.params)
+        val = np.zeros_like(x)
+        for p in self.params[:end]:
+            val += np.sum(
+                np.multiply(p.ws[:, None], p.phi(x, p.cs, p.d)),
+                axis=0,
+            )
+
+        return val
+
+    def __add__(self, other):
+        if isinstance(other, RBFParams):
+            return Approximant(self.params.append(other))
+        elif isinstance(other, Approximant):
+            return Approximant(self.params + other.params)
+        else:
+            raise NotImplementedError
+
+    def __iadd__(self, other):
+        if isinstance(other, RBFParams):
+            self.params.append(other)
+        elif isinstance(other, Approximant):
+            self.params += other.params
+        else:
+            raise NotImplementedError
+
+        return self
 
 
 def error(u: Callable, u_approx: Callable, a: float, b: float):
@@ -31,51 +68,14 @@ def error(u: Callable, u_approx: Callable, a: float, b: float):
     return np.sqrt(numerator / denominator)
 
 
-def lhs_integrand_factory(phi, xi, xj):
-    def func(x):
-        return phi(x, xi, m=1) * phi(x, xj, m=1) + phi(x, xi) * phi(x, xj)
+def fill_distance(points):
+    n = points.shape[0]
+    minfill = - np.inf
 
-    return func
+    for i in range(n):
+        for j in range(i+1, n):
+            dist = np.abs(points[i] - points[j])
+            if dist < minfill:
+                minfill = dist
 
-
-def rhs_integrand_factory(phi, f, xi):
-    def func(x):
-        return f(x) * phi(x, xi)
-
-    return func
-
-
-def solve(a, b, f, n, d, k, delta, precond=False):
-    centres = np.linspace(a, b, n)
-    phi = phi_factory(d, k, delta)
-
-    A = np.zeros((centres.size, centres.size))
-    fs = np.zeros_like(centres)
-    for i, xi in enumerate(centres):
-        fs[i] = integrate.trapezoid(
-            rhs_integrand_factory(phi, f, xi),
-            a, b, 2500
-        )
-
-        A[i, i] = integrate.trapezoid(
-            lhs_integrand_factory(phi, xi, xi),
-            a, b, 2500
-        )
-
-        for j, xj in enumerate(centres[:i]):
-            A[i, j] = integrate.trapezoid(
-                lhs_integrand_factory(phi, xi, xj),
-                a, b, 2500
-            )
-
-            A[j, i] = A[i, j]
-
-    if precond:
-        # Jacobi Preconditioning
-        pinv = np.diag(1 / np.sqrt(np.diag(A)))
-
-        alphas = pinv @ np.linalg.solve(pinv @ A @ pinv, pinv @ fs)
-    else:
-        alphas = np.linalg.solve(A, fs)
-
-    return combine(phi, centres, alphas), A, fs, centres, alphas
+    return minfill / 2
