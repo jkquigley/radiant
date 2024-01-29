@@ -1,7 +1,7 @@
 import numpy as np
 from ..integrate import integrate
-from ..util import Approximant
-from ..util import RBFParams
+from .approximant import Approximant
+from .approximant import RBFParams
 
 
 def lhs_integrand_factory(phi, xi, xj, delta):
@@ -45,7 +45,7 @@ def solve(f, centres, delta, phi, *args, combine=True, **kwargs):
             A[j, i] = A[i, j]
 
     weights = np.linalg.solve(A, fs)
-    params = RBFParams(phi, centres, weights, delta)
+    params = RBFParams(phi, centres, delta, weights)
 
     if combine:
         return Approximant(params), A

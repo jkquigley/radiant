@@ -1,5 +1,5 @@
 import numpy as np
-from ..util import Approximant
+from .approximant import Approximant
 
 
 def thin(centres, delta, nlevels, min_npoints=2):
@@ -32,17 +32,17 @@ def solve(
 ):
     approx = Approximant()
 
-    for i, (c, d) in enumerate(thin(centres, delta, nlevels)):
+    for c, d in thin(centres, delta, nlevels):
         result = solver(
             f, c, d, phi, *solver_args, combine=False, **solver_kwargs
         )
-        new_params = result[0]
+        params = result[0]
         # TODO: extract results
 
-        new_params.ws -= approx(c)
-        approx += new_params
+        params -= approx(c)
+        approx.append(params)
 
     if combine:
         return approx,
     else:
-        return approx.params
+        return approx.params,
