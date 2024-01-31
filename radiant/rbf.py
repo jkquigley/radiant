@@ -1,10 +1,8 @@
 from math import comb
 import numpy as np
-from numpy.typing import NDArray
-from typing import Callable
 
 
-def phi_factory(d: int, k: int) -> Callable:
+def phi_factory(d: int, k: int):
     if d <= 0:
         raise ValueError(
             "Dimension 'd' must be a positive integer."
@@ -49,7 +47,7 @@ def phi_factory(d: int, k: int) -> Callable:
             "Smoothness 'k' must be one of 0, 1, 2, or 3."
         )
 
-    def func(x: NDArray, c: NDArray, delta: float, m: int = 0) -> NDArray:
+    def func(x, c, delta, m=0):
         r = np.abs(np.subtract.outer(c / delta, x / delta))
         return np.where(prefix(r) >= 0, poly.deriv(m)(r) / (delta ** m), 0)
 

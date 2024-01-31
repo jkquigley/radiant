@@ -1,20 +1,9 @@
-from numpy.typing import NDArray
 import numpy as np
-from typing import Callable
 from typing import List
 
 
 class RBFParams:
-    """
-    A data structure to store a radial basis function and its parameters; i.e.
-    its centres, support width, and weights at corresponding to the centres.
-
-    Arithmetic operations are exposed to the weights member for ease of
-    manipulating these values.
-    """
-    def __init__(
-            self, phi: Callable, cs: NDArray, d: float, ws: NDArray = None
-    ):
+    def __init__(self, phi, cs, d, ws=None):
         if ws is None:
             ws = np.ones_like(cs)
 
@@ -39,9 +28,6 @@ class RBFParams:
 
 
 class Approximant:
-    """
-    Function approximator using the parameters provided by `RBFParams`.
-    """
     def __init__(self, params: None | RBFParams | List[RBFParams] = None):
         if params is None:
             params = []
@@ -50,13 +36,13 @@ class Approximant:
 
         self.params = params
 
-    def __call__(self, x, end=None):
+    def __call__(self, x, m=0, end=None):
         if end is None:
             end = len(self.params)
         val = np.zeros_like(x)
         for p in self.params[:end]:
             val += np.sum(
-                np.multiply(p.ws[:, None], p.phi(x, p.cs, p.d)),
+                np.multiply(p.ws[:, None], p.phi(x, p.cs, p.d, m)),
                 axis=0,
             )
 

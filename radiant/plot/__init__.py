@@ -1,12 +1,12 @@
 __all__ = [
     "ml_animate",
-    "overlay",
+    "many",
 ]
 
 
 from matplotlib.pylab import rcParams
 from .animate import ml_animate
-from .plot import overlay
+from .plot import many
 
 
 rcParams['axes.xmargin'] = 0

@@ -27,7 +27,7 @@ def ml_animate(u, approx, a, b, n=1000, interval=1000, **kwargs):
     anim = animation.FuncAnimation(
         fig,
         func,
-        frames=range(1, len(approx) + 1),
+        frames=range(0, len(approx) + 1),
         interval=interval,
         blit=True,
         repeat=False

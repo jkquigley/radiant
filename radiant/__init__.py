@@ -1,4 +1,5 @@
 __all__ = [
+    "Logger",
     "integrate",
     "animate",
     "plot",
@@ -10,8 +11,8 @@ __all__ = [
     "error",
 ]
 
-
 from .integrate import integrate
+from .logger import Logger
 from .plot import animate
 from .plot import plot
 from .rbf import phi_factory

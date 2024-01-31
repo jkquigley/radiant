@@ -1,99 +1,38 @@
-import numpy as np
-from scipy import integrate
 from numpy.polynomial import legendre
-from typing import Callable
+import numpy as np
 
 
-# TODO: Fix bugs causing large errors with various ns.
-def leggauss(
-        f: Callable, a: float, b: float, n: int
-) -> float:
-    """
-    Approximate the integral of :math:`f` from :math:`a` to :math:`b` using
-    the Gauss-Legendre quadrature method.
+class BaseIntegrator:
+    def __init__(self, a, b, accuracy):
+        self.a = a
+        self.b = b
+        self.accuracy = accuracy
 
-    Parameters
-    ----------
-    f: callable
-    The function to integrate.
-
-    a: float
-    The left boundary point.
-
-    b: float
-    The right boundary point.
-
-    n: int
-    The Legendre polynomial degree.
-
-    Returns
-    -------
-    y: float
-    The approximated value of the integral of :math:`f` from :math:`a` to
-    :math:`b`.
-    """
-    # Get the Gauss-Legendre quadrature points and weights.
-    x, w = legendre.leggauss(n)
-
-    # Compute the integral approximation with an interval rescaling.
-    y = (b - a) / 2 * sum(w * f(((b - a) * x + (b + a)) / 2))
-
-    return y
+    def __call__(self, func, *fargs):
+        raise NotImplementedError
 
 
-def trapezoid(f: Callable, a: float, b: float, n: int):
-    """
-    Approximate the integral of :math:`f` from :math:`a` to :math:`b` using
-    the trapezoid method.
+def _rescale(x, a, b):
+    return ((b - a) * x + (b + a)) / 2
 
-    Parameters
-    ----------
-    f: callable
-    The function to integrate.
 
-    a: float
-    The left boundary point.
+class LeggaussIntegrator(BaseIntegrator):
+    def __init__(self, a, b, accuracy):
+        super().__init__(a, b, accuracy)
 
-    b: float
-    The right boundary point.
+    def __call__(self, func, *fargs):
+        x, w = legendre.leggauss(self.accuracy)
+        x_scaled = _rescale(x, self.a, self.b)
 
-    n: int
-    The number of integration points in an interval of length 1.
+        return (self.b - self.a) / 2 * sum(w * func(x_scaled))
 
-    Returns
-    -------
-    y: float
-    The approximated value of the integral of :math:`f` from :math:`a` to
-    :math:`b`.
-    """
-    xs = np.linspace(a, b, n * int(b - a))
-    ys = f(xs)
 
-    return integrate.trapezoid(ys, xs)
+class TrapezoidIntegrator(BaseIntegrator):
+    def __init__(self, a, b, accuracy):
+        super().__init__(a, b, accuracy)
 
-def quad(f: Callable, a: float, b: float):
-    """
-    Approximate the integral of :math:`f` from :math:`a` to :math:`b` using
-    the trapezoid method.
+    def __call__(self, func, *fargs):
+        xs = np.linspace(self.a, self.b, self.accuracy * int(self.b - self.a))
+        ys = func(xs, *fargs)
 
-    Parameters
-    ----------
-    f: callable
-    The function to integrate.
-
-    a: float
-    The left boundary point.
-
-    b: float
-    The right boundary point.
-
-    n: int
-    The number of integration points in an interval of length 1.
-
-    Returns
-    -------
-    y: float
-    The approximated value of the integral of :math:`f` from :math:`a` to
-    :math:`b`.
-    """
-    return integrate.quad(f, a, b)[0]
+        return np.trapz(ys, xs)

@@ -1,10 +1,10 @@
 import numpy as np
-from ..integrate import integrate
+import cupy as cp
 from .approximant import Approximant
 from .approximant import RBFParams
 
 
-def lhs_integrand_factory(phi, xi, xj, delta):
+def _lhs_integrand_factory(xi, xj, delta, phi):
     def func(x):
         return (phi(x, xi, delta, m=1) * phi(x, xj, delta, m=1) +
                 phi(x, xi, delta) * phi(x, xj, delta))
@@ -12,42 +12,39 @@ def lhs_integrand_factory(phi, xi, xj, delta):
     return func
 
 
-def rhs_integrand_factory(phi, f, xi, delta):
+def _rhs_integrand_factory(f, xi, delta, phi, approx):
     def func(x):
-        return f(x) * phi(x, xi, delta)
+        return (f(x) * phi(x, xi, delta) -
+                approx(x, m=1) * phi(x, xi, delta, m=1) -
+                approx(x) * phi(x, xi, delta))
 
     return func
 
 
-def solve(f, centres, delta, phi, *args, combine=True, **kwargs):
-    a = args[0]
-    b = args[1]
+def solve(
+        f, centres, delta, phi, integrator, *args,
+        combine=True, approx=None, **kwargs
+):
+    if approx is None:
+        approx = Approximant()
 
-    A = np.zeros((centres.shape[0], centres.shape[0]))
+    mat = np.zeros((centres.shape[0], centres.shape[0]))
     fs = np.zeros_like(centres)
-    for i, xi in enumerate(centres):
-        fs[i] = integrate.trapezoid(
-            rhs_integrand_factory(phi, f, xi, delta),
-            a, b, 2500
-        )
 
-        A[i, i] = integrate.trapezoid(
-            lhs_integrand_factory(phi, xi, xi, delta),
-            a, b, 2500
-        )
+    for i, xi in enumerate(centres):
+        fs[i] = integrator(_rhs_integrand_factory(f, xi, delta, phi, approx))
+
+        mat[i, i] = integrator(_lhs_integrand_factory(xi, xi, delta, phi))
 
         for j, xj in enumerate(centres[:i]):
-            A[i, j] = integrate.trapezoid(
-                lhs_integrand_factory(phi, xi, xj, delta),
-                a, b, 2500
-            )
+            mat[i, j] = integrator(_lhs_integrand_factory(xi, xj, delta, phi))
 
-            A[j, i] = A[i, j]
+            mat[j, i] = mat[i, j]
 
-    weights = np.linalg.solve(A, fs)
+    weights = cp.linalg.solve(cp.array(mat), cp.array(fs)).get()
     params = RBFParams(phi, centres, delta, weights)
 
     if combine:
-        return Approximant(params), A
+        return Approximant(params), [np.linalg.cond(mat)]
     else:
-        return params, A
+        return params, [np.linalg.cond(mat)]
