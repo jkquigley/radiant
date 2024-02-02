@@ -1,8 +1,8 @@
-import numpy as np
+import cupy as cp
 
 
 def error(u, approx, integrator):
     numerator = integrator(lambda x: (u(x) - approx(x)) ** 2)
     denominator = integrator(lambda x: u(x) ** 2)
 
-    return np.sqrt(numerator / denominator)
+    return cp.sqrt(numerator / denominator)

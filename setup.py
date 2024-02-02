@@ -11,6 +11,7 @@ setup(
     ],
     install_requires=[
         'setuptools',
+        'cupy',
         'numpy',
         'scipy',
         'matplotlib',

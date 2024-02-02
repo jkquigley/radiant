@@ -1,4 +1,4 @@
-import numpy as np
+import cupy as cp
 import matplotlib.pylab as plt
 
 
@@ -9,10 +9,11 @@ def many(a, b, *funcs, n=1000, labels=None, **kwargs):
         labels = [None] * len(funcs)
 
     plt.figure(**kwargs)
-    xs = np.linspace(a, b, n * int(b - a))
+    plt.margins(x=0.)
+    xs = cp.linspace(a, b, n * int(b - a))
 
     for func, label in zip(funcs, labels):
-        plt.plot(xs, func(xs), label=label)
+        plt.plot(xs.get(), func(xs).get(), label=label)
 
     if leg:
         plt.legend()
@@ -22,7 +23,7 @@ def many(a, b, *funcs, n=1000, labels=None, **kwargs):
 def thinning(centres, delta, **kwargs):
     plt.figure(**kwargs)
     for c, d in zip(centres, delta):
-        plt.plot(c, d * np.ones_like(c), 'b.')
+        plt.plot(c.get(), (d * cp.ones_like(c)).get(), 'b.')
 
     plt.yscale('log')
     plt.show()

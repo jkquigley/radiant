@@ -1,23 +1,15 @@
 __all__ = [
-    "Logger",
     "integrate",
+    "solve",
+    "error",
     "animate",
     "plot",
-    "phi_factory",
-    "Approximant",
-    "interpolate",
-    "helmholtz",
-    "multilevel",
-    "error",
+    "Wendland",
 ]
 
 from .integrate import integrate
-from .logger import Logger
-from .plot import animate
-from .plot import plot
-from .rbf import phi_factory
-from .solver import Approximant
-from .solver import interpolate
-from .solver import helmholtz
-from .solver import multilevel
+from .solve import solve
 from .util import error
+from .visualise import animate
+from .visualise import plot
+from .wendland import Wendland
