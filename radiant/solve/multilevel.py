@@ -1,4 +1,4 @@
-import cupy as cp
+import numpy as np
 
 
 class MultilevelFunction(list):
@@ -9,7 +9,7 @@ class MultilevelFunction(list):
         if end is None:
             end = len(self)
 
-        val = cp.zeros_like(x)
+        val = np.zeros_like(x)
         for s in self[:end]:
             val += s(x, *args, **kwargs)
 

@@ -1,5 +1,6 @@
 from .base import BaseSolver
-import cupy as cp
+import numpy as np
+
 
 def _lhs_integrand_factory(xi, xj, delta, phi):
     def func(x):
@@ -30,7 +31,7 @@ class HelmholtzBaseSolver(BaseSolver):
         self.integrator = integrator
 
     def gen_mat(self):
-        self.mat = cp.zeros((self.centres.shape[0], self.centres.shape[0]))
+        self.mat = np.zeros((self.centres.shape[0], self.centres.shape[0]))
 
         for i, xi in enumerate(self.centres):
             self.mat[i, i] = self.integrator(
@@ -45,7 +46,7 @@ class HelmholtzBaseSolver(BaseSolver):
                 self.mat[j, i] = self.mat[i, j]
 
     def gen_rhs(self, func, guess):
-        self.b = cp.zeros_like(self.centres)
+        self.b = np.zeros_like(self.centres)
         for i, xi in enumerate(self.centres):
             self.b[i] = self.integrator(
                 _rhs_integrand_factory(func, xi, self.delta, self.phi, guess)

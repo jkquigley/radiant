@@ -1,5 +1,5 @@
 import cupy as cp
-from numpy.linalg import cond
+import numpy as np
 
 
 class BaseSolver:
@@ -22,10 +22,10 @@ class BaseSolver:
 
         self.gen_rhs(func, guess)
 
-        weights = cp.linalg.solve(self.mat, cp.array(self.b))
+        weights = cp.linalg.solve(cp.array(self.mat), cp.array(self.b)).get()
 
         def approximant(x, *, m=0):
-            return cp.sum(
+            return np.sum(
                 self.phi(x, self.centres, self.delta, weights, m=m),
                 axis=0,
             )
@@ -36,4 +36,4 @@ class BaseSolver:
         if self.mat is None:
             return -1.
         else:
-            return cond(self.mat.get())
+            return np.linalg.cond(self.mat)

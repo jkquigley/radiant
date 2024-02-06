@@ -1,5 +1,4 @@
 from math import comb
-import cupy as cp
 import numpy as np
 
 
@@ -49,6 +48,14 @@ class Wendland:
                 "Smoothness 'k' must be one of 0, 1, 2, or 3."
             )
 
+        if d >= 2:
+            def norm(x):
+                return np.linalg.norm(x, axis=0)
+
+            self.norm = norm
+        else:
+            self.norm = np.abs
+
     def __call__(self, x, c, delta, w=None, m=0):
         if w is None:
             w = np.ones_like(c)
@@ -56,10 +63,12 @@ class Wendland:
         if w.shape != ():
             w = w[:, None]
 
-        r = np.abs(np.subtract.outer(c, x))
+        diff = - np.subtract.outer(c, x)
+        normed_diff = np.abs(diff)
+        r = normed_diff / delta
         unsupported = np.multiply(
             w,
-            self.poly.deriv(m)(r / delta) / (delta ** m),
+            (diff / (delta * normed_diff + 1e-6)) ** m * self.poly.deriv(m)(r),
         )
 
-        return cp.array(np.where(1 - r / delta >= 0, unsupported, 0))
+        return np.where(1 - r >= 0, unsupported, 0)

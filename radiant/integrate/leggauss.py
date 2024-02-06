@@ -1,6 +1,5 @@
 from .base import BaseIntegrator
 from numpy.polynomial import legendre
-import cupy as cp
 
 
 def _rescale(x, a, b):
@@ -13,8 +12,6 @@ class LeggaussIntegrator(BaseIntegrator):
 
     def __call__(self, func):
         x, w = legendre.leggauss(self.accuracy)
-        x = cp.array(x)
-        w = cp.array(w)
         x_scaled = _rescale(x, self.a, self.b)
 
         return (self.b - self.a) / 2 * sum(w * func(x_scaled))
