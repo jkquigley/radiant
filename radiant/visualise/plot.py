@@ -20,6 +20,14 @@ def many(a, b, *funcs, n=1000, labels=None, **kwargs):
     plt.show()
 
 
+def difference(a, b, f, g, n=1000, **kwargs):
+    plt.figure(**kwargs)
+    plt.margins(x=0.)
+    xs = np.linspace(a, b, n * int(b - a))
+    plt.plot(xs, np.abs(f(xs) - g(xs)))
+    plt.show()
+
+
 def thinning(centres, delta, **kwargs):
     plt.figure(**kwargs)
     for c, d in zip(centres, delta):
