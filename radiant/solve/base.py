@@ -24,7 +24,7 @@ class BaseSolver:
 
         weights = cp.linalg.solve(cp.array(self.mat), cp.array(self.b)).get()
 
-        def approximant(x, *, m=0):
+        def approximant(x, *, m=None):
             return np.sum(
                 self.phi(x, self.centres, self.delta, weights, m=m),
                 axis=0,

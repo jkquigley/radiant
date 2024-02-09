@@ -4,7 +4,7 @@ import numpy as np
 
 def _lhs_integrand_factory(xi, xj, delta, phi):
     def func(x):
-        return (phi(x, xi, delta, m=1) * phi(x, xj, delta, m=1) +
+        return (phi(x, xi, delta, m=0) * phi(x, xj, delta, m=0) +
                 phi(x, xi, delta) * phi(x, xj, delta))
 
     return func
@@ -18,7 +18,7 @@ def _rhs_integrand_factory(f, xi, delta, phi, guess):
         def func(x):
             return (
                     f(x) * phi(x, xi, delta) -
-                    guess(x, m=1) * phi(x, xi, delta, m=1) -
+                    guess(x, m=0) * phi(x, xi, delta, m=0) -
                     guess(x) * phi(x, xi, delta)
             )
 
