@@ -1,9 +1,9 @@
 __all__ = [
-    "HelmholtzBaseSolver",
+    "HelmholtzSolver",
     "InterpolationSolver",
     "MultilevelSolver",
 ]
 
-from .helmholtz import HelmholtzBaseSolver
+from .helmholtz import HelmholtzSolver
 from .interpolate import InterpolationSolver
 from .multilevel import MultilevelSolver

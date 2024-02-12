@@ -1,12 +1,22 @@
 from .base import BaseIntegrator
 import numpy as np
+from ..util import grid
+
 
 class TrapezoidIntegrator(BaseIntegrator):
-    def __init__(self, a, b, accuracy):
-        super().__init__(a, b, accuracy)
+    def __init__(self, ranges, accuracy):
+        super().__init__(ranges)
+        self.accuracy = accuracy
+
+        self.x = np.meshgrid(*[
+            np.linspace(a, b, self.accuracy * int(b - a))
+            for a, b in self.ranges
+        ])
 
     def __call__(self, func):
-        xs = np.linspace(self.a, self.b, self.accuracy * int(self.b - self.a))
-        ys = func(xs)
+        xs = np.meshgrid(*[
+            np.linspace(a, b, self.accuracy * int(b - a))
+            for a, b in self.ranges
+        ])
 
-        return np.trapz(ys, xs)
+        return self.measure * np.mean(func(*xs))

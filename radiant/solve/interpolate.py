@@ -2,14 +2,14 @@ from .base import BaseSolver
 
 
 class InterpolationSolver(BaseSolver):
-    def __init__(self, phi, centres, delta):
-        super().__init__(phi, centres, delta)
+    def __init__(self, phi, delta, *xc):
+        super().__init__(phi, delta, *xc)
 
     def gen_mat(self):
-        self.mat = self.phi(self.centres, self.centres, self.delta)
+        self.mat = self.phi(self.delta, *self.xc, *self.xc)
 
     def gen_rhs(self, func, guess):
         if guess is None:
-            self.b = func(self.centres)
+            self.b = func(*self.xc)
         else:
-            self.b = func(self.centres) - guess(self.centres)
+            self.b = func(*self.xc) - guess(*self.xc)

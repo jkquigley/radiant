@@ -2,7 +2,18 @@ import numpy as np
 
 
 def error(u, approx, integrator):
-    numerator = integrator(lambda x: (u(x) - approx(x)) ** 2)
-    denominator = integrator(lambda x: u(x) ** 2)
+    numerator = integrator(lambda *x: (u(*x) - approx(*x)) ** 2)
+    denominator = integrator(lambda *x: u(*x) ** 2)
 
     return np.sqrt(numerator / denominator)
+
+
+def flatten(x):
+    if isinstance(x, np.ndarray):
+        return x.flatten()
+    else:
+        return x
+
+
+def grid(arr, d):
+    return np.array(np.meshgrid(*([arr] * d)))

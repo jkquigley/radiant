@@ -1,7 +1,7 @@
 __all__ = [
-    "LeggaussIntegrator",
     "TrapezoidIntegrator",
+    "QuadIntegrator",
 ]
 
-from .leggauss import LeggaussIntegrator
 from .trapezoid import TrapezoidIntegrator
+from .quad import QuadIntegrator
