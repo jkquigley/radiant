@@ -33,7 +33,16 @@ def overlay(ranges, *funcs, n=1000, labels=None, **kwargs):
     plt.show()
 
 
-def spread(ranges, *funcs, ncols=None, n=1000, titles=None, **kwargs):
+def spread(
+        ranges,
+        *funcs,
+        n=1000,
+        ncols=None,
+        wspace=0.,
+        hspace=0.,
+        titles=None,
+        **kwargs
+):
     if ncols is None:
         ncols = len(funcs)
 
@@ -43,6 +52,9 @@ def spread(ranges, *funcs, ncols=None, n=1000, titles=None, **kwargs):
     fig = plt.figure(**kwargs)
     x = gridn(ranges, n)
     nrows = len(funcs) // ncols
+
+    if ncols % len(funcs) != 0:
+        nrows += 1
 
     if len(ranges) == 1:
         for i, (f, title) in enumerate(zip(funcs, titles)):
@@ -59,6 +71,7 @@ def spread(ranges, *funcs, ncols=None, n=1000, titles=None, **kwargs):
     else:
         raise ValueError(f"Cannot plot of {len(ranges)} ranges.")
 
+    plt.subplots_adjust(wspace=wspace, hspace=hspace)
     plt.show()
 
 

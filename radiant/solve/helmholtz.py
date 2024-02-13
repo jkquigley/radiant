@@ -1,9 +1,6 @@
 from .base import BaseSolver
 import numpy as np
-
-
-def dot(a, b):
-    return np.einsum('i...,i...->...', a, b)
+from ..util import dot
 
 
 def _lhs_integrand_factory(phi, delta, *args):
