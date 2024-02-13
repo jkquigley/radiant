@@ -5,6 +5,10 @@ from numpy.polynomial import polynomial
 from .util import flatten
 
 
+def epsdiv(a, b, eps=1e-6):
+    return a / (b + eps)
+
+
 class Wendland:
     def __init__(self, d, k):
         if d <= 0:
@@ -81,26 +85,30 @@ class Wendland:
             unsupported = polynomial.polyval(r, self.coefs)
         elif m in self.allowed_first_derivatives:
             deriv_coefs = polynomial.polyder(self.coefs)
-            deriv_scale = diffs[m] / (delta * normed_diff + 1e-6)
+            deriv_scale = epsdiv(diffs[m], delta * normed_diff)
             unsupported = deriv_scale * polynomial.polyval(r, deriv_coefs)
         elif m in self.allowed_second_derivatives:
             xi, xj = m
             first_deriv_coefs = polynomial.polyder(self.coefs)
             second_deriv_coefs = polynomial.polyder(first_deriv_coefs)
 
-            term1 = (diffs[xi] * diffs[xj] *
-                     polynomial.polyval(r, second_deriv_coefs) /
-                     (delta * normed_diff) ** 2)
+            term1 = diffs[xi] * diffs[xj] * epsdiv(
+                polynomial.polyval(r, second_deriv_coefs),
+                (delta * normed_diff) ** 2
+            )
 
-            term2 = - (diffs[xi] * diffs[xj] *
-                       polynomial.polyval(r, first_deriv_coefs) /
-                       (delta * normed_diff ** 3))
+            term2 = - diffs[xi] * diffs[xj] * epsdiv(
+                polynomial.polyval(r, first_deriv_coefs),
+                delta * normed_diff ** 3
+            )
 
             unsupported = term1 + term2
 
             if xi == xj:
-                unsupported += (polynomial.polyval(r, first_deriv_coefs) /
-                                (delta * normed_diff))
+                unsupported += epsdiv(
+                    polynomial.polyval(r, first_deriv_coefs),
+                    delta * normed_diff,
+                )
 
         else:
             raise ValueError(f"Unsupported derivative m = {m}.")

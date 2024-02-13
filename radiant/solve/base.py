@@ -20,6 +20,9 @@ class Approximant:
             self.phi(self.delta, *x, *self.xc, m=m),
         )
 
+    def set_w(self, w):
+        self.w = w
+
     def grad(self, *x):
         return np.array([
             self.__call__(*x, m=i) for i in range(self.phi.d)
@@ -53,7 +56,7 @@ class BaseSolver:
 
         self.gen_rhs(func, guess)
 
-        w = cp.linalg.solve(cp.array(self.mat), cp.array(self.b)).get()
+        w = cp.linalg.lstsq(cp.array(self.mat), cp.array(self.b))[0].get()
 
         return Approximant(self.phi, self.delta, *self.xc, w=w)
 
