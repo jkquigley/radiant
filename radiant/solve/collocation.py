@@ -2,8 +2,14 @@ from .base import BaseSolver
 import numpy as np
 
 
+def map_indexing(idx, xc):
+    return xc if idx is None else map(lambda x: x[idx], xc)
+
+
 class CollocationSolver(BaseSolver):
-    def __init__(self, operators, xc_idxs, phi, delta, *xc):
+    def __init__(
+            self, operators, xc_idxs, phi, delta, *xc
+    ):
         super().__init__(phi, delta, *xc)
         self.operators = operators
         self.xc_idxs = xc_idxs
@@ -11,10 +17,7 @@ class CollocationSolver(BaseSolver):
     def gen_mat(self):
         mats = []
         for op, idx in zip(self.operators, self.xc_idxs):
-            if idx is None:
-                indexed_xc = self.xc
-            else:
-                indexed_xc = tuple(map(lambda x: x[idx], self.xc))
+            indexed_xc = map_indexing(idx, self.xc)
             mats.append(op(self.phi, self.delta, *self.xc, *indexed_xc))
 
         self.mat = np.vstack(mats)
@@ -28,10 +31,7 @@ class CollocationSolver(BaseSolver):
 
         vecs = []
         for f, idx in zip(funcs, self.xc_idxs):
-            if idx is None:
-                indexed_xc = self.xc
-            else:
-                indexed_xc = tuple(map(lambda x: x[idx], self.xc))
+            indexed_xc = map_indexing(idx, self.xc)
             vecs.append(f(*indexed_xc))
 
         self.b = np.hstack(vecs)

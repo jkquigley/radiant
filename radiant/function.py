@@ -64,7 +64,7 @@ class Wendland:
         ))
         self.allowed_derivatives.add(None)
 
-    def __call__(self, delta, *args, w=1., m=None):
+    def __call__(self, delta, *args, m=None):
         if len(args) != self.d * 2:
             raise ValueError(
                 f"Function requires {2 * self.d} coordinate "
@@ -118,28 +118,86 @@ class Wendland:
             shape,
         )
 
-    def grad(self, delta, *args, w=1.):
+    def grad(self, delta, *args):
         return np.array([
-            self.__call__(delta, *args, w=w, m=i) for i in range(self.d)
+            self.__call__(delta, *args, m=i) for i in range(self.d)
         ])
 
-    def div(self, delta, *args, w=1.):
-        return np.sum(self.grad(delta, *args, w=w), axis=0)
+    def div(self, delta, *args):
+        return np.sum(self.grad(delta, *args), axis=0)
 
-    def hessian(self, delta, *args, w=1.):
+    def hessian(self, delta, *args):
         mat = np.zeros((self.d, self.d, *np.shape(args[0])))
 
         for i in range(self.d):
-            mat[i, i] = self.__call__(delta, *args, w=w, m=(i, i))
+            mat[i, i] = self.__call__(delta, *args, m=(i, i))
 
             for j in range(i):
-                mat[i, j] = self.__call__(delta, *args, w=w, m=(i, j))
+                mat[i, j] = self.__call__(delta, *args, m=(i, j))
                 mat[j, i] = mat[i, j]
 
         return mat
 
-    def laplacian(self, delta, *args, w=1.):
+    def laplacian(self, delta, *args):
         return np.sum([
-            self.__call__(delta, *args, w=w, m=(i, i))
+            self.__call__(delta, *args, m=(i, i))
             for i in range(self.d)
         ], axis=0)
+
+
+class CompositeFunction:
+    def __init__(self, phi, delta, *xc, w=None):
+        self.phi = phi
+        self.delta = delta
+        self.xc = xc
+        if w is None:
+            self.w = np.ones(np.size(xc[0]))
+        else:
+            self.w = w
+
+    def __call__(self, *x, m=None):
+        return np.einsum(
+            'i,i...->...',
+            self.w,
+            self.phi(self.delta, *x, *self.xc, m=m),
+        )
+
+    def set_w(self, w):
+        if np.shape(w) == () or np.shape(w) == (np.size(self.xc[0]),):
+            self.w = w
+        else:
+            raise ValueError(f"Invalid shape {np.shape(w)} for weights.")
+
+    def div(self, *x):
+        return np.einsum(
+            'i,i...->...',
+            self.w,
+            self.phi.div(self.delta, *x, *self.xc),
+        )
+
+    def laplacian(self, *x):
+        return np.einsum(
+            'i,i...->...',
+            self.w,
+            self.phi.laplacian(self.delta, *x, *self.xc),
+        )
+
+
+class MultilevelCompositeFunction(list):
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, *x, end=None):
+        if end is None:
+            end = len(self)
+
+        if len(self[:end]) == 0:
+            return np.zeros_like(x[0])
+
+        return np.sum([f(*x) for f in self[:end]], axis=0)
+
+    def div(self, *x):
+        return np.sum([f.div(*x) for f in self], axis=0)
+
+    def laplacian(self, *x):
+        return np.sum([f.laplacian(*x) for f in self], axis=0)

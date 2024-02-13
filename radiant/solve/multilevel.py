@@ -1,34 +1,19 @@
-import numpy as np
-
-
-class MultilevelFunction(list):
-    def __init__(self):
-        super().__init__()
-
-    def __call__(self, x, *args, end=None, **kwargs):
-        if end is None:
-            end = len(self)
-
-        val = np.zeros_like(x)
-        for s in self[:end]:
-            val += s(x, *args, **kwargs)
-
-        return val
+from ..function import MultilevelCompositeFunction
 
 
 class MultilevelSolver:
-    def __init__(self, phi, centres, delta, solver, *solver_args, outer=1):
+    def __init__(self, solver, phi, delta, xcs, *solver_args, outer=1):
         self.solvers = [
-            solver(phi, c, d, *solver_args) for c, d in zip(centres, delta)
+            solver(*solver_args, phi, d, *c) for c, d in zip(xcs, delta)
         ]
         self.outer = outer
 
     def solve(self, func):
-        guess = MultilevelFunction()
+        guess = MultilevelCompositeFunction()
 
         for _ in range(self.outer):
             for solver in self.solvers:
-                guess.append(solver.solve(func, guess))
+                guess.append(solver.solve(func, guess=guess))
 
         return guess
 
