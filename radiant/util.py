@@ -15,5 +15,27 @@ def flatten(x):
         return x
 
 
-def grid(arr, d):
-    return np.array(np.meshgrid(*([arr] * d)))
+def gridinc(ranges, inc, flat=False):
+    if flat:
+        return list(map(flatten, np.meshgrid(*[
+            np.arange(a, b + inc * int(b - a), inc * int(b - a))
+            for a, b in ranges
+        ])))
+    else:
+        return np.meshgrid(*[
+            np.arange(a, b + inc * int(b - a), inc * int(b - a))
+            for a, b in ranges
+        ])
+
+
+def gridn(ranges, n, flat=False):
+    if flat:
+        return list(map(flatten, np.meshgrid(*[
+            np.linspace(a, b, n * int(b - a))
+            for a, b in ranges
+        ])))
+    else:
+        return np.meshgrid(*[
+            np.linspace(a, b, n * int(b - a))
+            for a, b in ranges
+        ])

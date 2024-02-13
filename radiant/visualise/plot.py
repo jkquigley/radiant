@@ -1,114 +1,64 @@
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pylab as plt
-from ..util import grid
+from ..util import gridn
 
 
-def difference(a, b, f, g, n=1000, **kwargs):
-    fig = plt.figure(**kwargs)
-    ax = fig.add_subplot(111)
-    plt.margins(x=0.)
-    xs = np.linspace(a, b, n * int(b - a))
-    ax.plot(xs, np.abs(f(xs) - g(xs)))
-    plt.show()
-
-
-def difference3d(a, b, f, g, n=1000, **kwargs):
-    fig = plt.figure(**kwargs)
-    ax = fig.add_subplot(111, projection='3d')
-    plt.margins(x=0., y=0.)
-    xs = grid(np.linspace(a, b, n * int(b - a)), 2)
-    ax.plot_surface(*xs, np.abs(f(*xs) - g(*xs)))
-    plt.show()
-
-
-def many(a, b, *funcs, n=1000, labels=None, **kwargs):
-    legend = True
-    if labels is None:
-        legend = False
-        labels = [None] * len(funcs)
-
-    fig = plt.figure(**kwargs)
-    ax = fig.add_subplot(111)
-    plt.margins(x=0.)
-    xs = np.linspace(a, b, n * int(b - a))
-
-    for func, label in zip(funcs, labels):
-        ax.plot(xs, func(xs), label=label)
-
-    if legend:
-        plt.legend()
-    plt.show()
-
-
-def many3d(a, b, *funcs, n=1000, labels=None, **kwargs):
+def overlay(ranges, *funcs, n=1000, labels=None, **kwargs):
     if labels is None:
         labels = [None] * len(funcs)
 
     legend = any([label is not None for label in labels])
 
     fig = plt.figure(**kwargs)
-    ax = fig.add_subplot(111, projection='3d')
-    plt.margins(x=0., y=0.)
-    xs = grid(np.linspace(a, b, n * int(b - a)), 2)
+    x = gridn(ranges, n)
 
-    for func, label in zip(funcs, labels):
-        ax.plot_surface(*xs, func(*xs), label=label, cmap='spring')
+    if len(ranges) == 1:
+        ax = fig.add_subplot(111)
+        plt.margins(x=0.)
+
+        for f, label in zip(funcs, labels):
+            ax.plot(*x, f(*x), label=label)
+    elif len(ranges) == 2:
+        ax = fig.add_subplot(111, projection='3d')
+        plt.margins(x=0., y=0.)
+
+        for f, label in zip(funcs, labels):
+            ax.plot_surface(*x, f(*x), label=label, cmap='spring')
+    else:
+        raise ValueError(f"Cannot plot of {len(ranges)} ranges.")
 
     if legend:
         plt.legend()
     plt.show()
 
 
-def triplet(a, b, f, g, h, n=1000, titles=None, **kwargs):
+def spread(ranges, *funcs, ncols=None, n=1000, titles=None, **kwargs):
+    if ncols is None:
+        ncols = len(funcs)
+
     if titles is None:
-        titles = [None] * 3
+        titles = [None] * len(funcs)
 
     fig = plt.figure(**kwargs)
-    ax0 = fig.add_subplot(131)
-    ax1 = fig.add_subplot(132)
-    ax2 = fig.add_subplot(133)
-    xs = np.linspace(a, b, n * int(b - a))
+    x = gridn(ranges, n)
+    nrows = len(funcs) // ncols
 
-    ax0.plot(xs, f(xs))
-    ax0.set_title(titles[0])
-    ax0.margins(x=0.)
+    if len(ranges) == 1:
+        for i, (f, title) in enumerate(zip(funcs, titles)):
+            ax = fig.add_subplot(nrows, ncols, i+1)
+            plt.margins(x=0.)
+            ax.plot(*x, f(*x))
+            ax.set_title(title)
+    elif len(ranges) == 2:
+        for i, (f, title) in enumerate(zip(funcs, titles)):
+            ax = fig.add_subplot(nrows, ncols, i+1, projection='3d')
+            plt.margins(x=0., y=0.)
+            ax.plot_surface(*x, f(*x), cmap='spring')
+            ax.set_title(title)
+    else:
+        raise ValueError(f"Cannot plot of {len(ranges)} ranges.")
 
-    ax1.plot(xs, g(xs))
-    ax1.set_title(titles[1])
-    ax1.margins(x=0.)
-
-    ax2.plot(xs, h(xs))
-    ax2.set_title(titles[2])
-    ax2.margins(x=0.)
-
-    plt.subplots_adjust(wspace=0.25)
-    plt.show()
-
-
-def triplet3d(a, b, f, g, h, n=1000, titles=None, **kwargs):
-    if titles is None:
-        titles = [None] * 3
-
-    fig = plt.figure(**kwargs)
-    ax0 = fig.add_subplot(131, projection='3d')
-    ax1 = fig.add_subplot(132, projection='3d')
-    ax2 = fig.add_subplot(133, projection='3d')
-    xs = grid(np.linspace(a, b, n * int(b - a)), 2)
-
-    ax0.plot_surface(*xs, f(*xs), cmap='spring')
-    ax0.set_title(titles[0])
-    ax0.margins(x=0., y=0.)
-
-    ax1.plot_surface(*xs, g(*xs), cmap='spring')
-    ax1.set_title(titles[1])
-    ax1.margins(x=0., y=0.)
-
-    ax2.plot_surface(*xs, h(*xs), cmap='spring')
-    ax2.set_title(titles[2])
-    ax2.margins(x=0., y=0.)
-
-    plt.subplots_adjust(wspace=0.25)
     plt.show()
 
 

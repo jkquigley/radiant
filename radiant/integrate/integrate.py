@@ -1,7 +1,9 @@
 __all__ = [
-    "TrapezoidIntegrator",
+    "MeanIntegrator",
     "QuadIntegrator",
+    "TrapezoidIntegrator",
 ]
 
-from .trapezoid import TrapezoidIntegrator
+from .mean import MeanIntegrator
 from .quad import QuadIntegrator
+from .trapezoid import TrapezoidIntegrator

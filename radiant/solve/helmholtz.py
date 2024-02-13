@@ -2,17 +2,18 @@ from .base import BaseSolver
 import numpy as np
 
 
+def dot(a, b):
+    return np.einsum('i...,i...->...', a, b)
+
+
 def _lhs_integrand_factory(phi, delta, *args):
     idx = len(args) // 2
     ci = args[:idx]
     cj = args[idx:]
 
     def func(*x):
-        return np.einsum(
-            'i...,i...->...',
-            phi.grad(delta, *x, *ci),
-            phi.grad(delta, *x, *cj),
-        ) + phi(delta, *x, *ci) * phi(delta, *x, *cj)
+        return (dot(phi.grad(delta, *x, *ci), phi.grad(delta, *x, *cj)) +
+                phi(delta, *x, *ci) * phi(delta, *x, *cj))
 
     return func
 
@@ -23,11 +24,9 @@ def _rhs_integrand_factory(f, phi, delta, *ci, guess=None):
             return f(*x) * phi(delta, *x, *ci)
     else:
         def func(*x):
-            return (
-                    f(*x) * phi(delta, *x, *ci) -
-                    np.sum(guess.grad(*x) * phi.grad(delta, *x, *ci), axis=0) -
-                    guess(*x) * phi(delta, *x, *ci)
-            )
+            return (f(*x) * phi(delta, *x, *ci) -
+                    dot(guess.grad(*x), phi.grad(delta, *x, *ci)) -
+                    guess(*x) * phi(delta, *x, *ci))
 
     return func
 
@@ -48,7 +47,7 @@ class HelmholtzSolver(BaseSolver):
 
             for j, cj in enumerate(zipped[:i]):
                 self.mat[i, j] = self.integrator(_lhs_integrand_factory(
-                    self.phi, self.delta, *cj, *cj
+                    self.phi, self.delta, *ci, *cj
                 ))
 
                 self.mat[j, i] = self.mat[i, j]
