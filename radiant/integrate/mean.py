@@ -1,5 +1,6 @@
 from .base import BaseIntegrator
-import numpy as np
+# import numpy as np
+import cupy as cp
 from ..util import gridn
 
 
@@ -11,4 +12,4 @@ class MeanIntegrator(BaseIntegrator):
         self.x = gridn(self.ranges, self.accuracy)
 
     def __call__(self, func):
-        return self.measure * np.mean(func(*self.x))
+        return (self.measure * cp.mean(cp.array(func(*self.x)))).get()
