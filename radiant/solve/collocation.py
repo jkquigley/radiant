@@ -21,7 +21,9 @@ class CollocationSolver(BaseSolver):
             if fil is None:
                 filtered_xc = self.xc
             else:
-                filtered_xc = map(lambda arr: fil(arr, self.xc), self.xc)
+                filtered_xc = tuple(map(
+                    lambda arr: fil(arr, self.xc), self.xc
+                ))
 
             mats.append(op(self.phi, self.delta, *self.xc, *filtered_xc))
 
@@ -39,7 +41,9 @@ class CollocationSolver(BaseSolver):
             if fil is None:
                 filtered_xc = self.xc
             else:
-                filtered_xc = map(lambda arr: fil(arr, self.xc), self.xc)
+                filtered_xc = tuple(map(
+                    lambda arr: fil(arr, self.xc), self.xc
+                ))
 
             if guess is None:
                 vecs.append(f(*filtered_xc))
