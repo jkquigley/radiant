@@ -5,35 +5,23 @@ from ..util import flatten
 
 
 class BaseSolver:
-    def __init__(self, phi, delta, *xc):
-        if phi.d != len(xc):
-            raise ValueError(
-                f"Dimension mismatch between phi ({phi.d}) and "
-                f"centres ({len(xc)})."
-            )
-
-        self.phi = phi
-        self.xc = tuple(map(flatten, xc))
-        self.delta = delta
-        self.n = np.size(xc[0])
+    def __init__(self):
         self.mat = None
         self.b = None
 
-    def gen_mat(self):
+    def gen_mat(self, phi):
         pass
 
-    def gen_rhs(self, *funcs, guess=None):
+    def gen_rhs(self, phi, *funcs, guess=None):
         pass
 
-    def solve(self, *funcs, guess=None):
+    def solve(self, phi, *funcs, guess=None):
         if self.mat is None:
-            self.gen_mat()
+            self.gen_mat(phi)
 
-        self.gen_rhs(*funcs, guess=None)
+        self.gen_rhs(*funcs, guess=guess)
 
-        w = cp.linalg.solve(cp.array(self.mat), cp.array(self.b)).get()
-
-        return CompositeFunction(self.phi, self.delta, *self.xc, w=w)
+        return cp.linalg.solve(cp.array(self.mat), cp.array(self.b)).get()
 
     def cond(self):
         if self.mat is None:
