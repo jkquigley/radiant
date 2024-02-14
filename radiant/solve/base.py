@@ -29,7 +29,7 @@ class BaseSolver:
         if self.mat is None:
             self.gen_mat()
 
-        self.gen_rhs(*funcs, guess=None)
+        self.gen_rhs(*funcs, guess=guess)
 
         w = cp.linalg.solve(cp.array(self.mat), cp.array(self.b)).get()
 
