@@ -124,7 +124,10 @@ class Wendland:
         ])
 
     def div(self, delta, *args):
-        return np.sum(self.grad(delta, *args), axis=0)
+        return np.sum([
+            self.__call__(delta, *args, m=i)
+            for i in range(self.d)
+        ], axis=0)
 
     def hessian(self, delta, *args):
         mat = np.zeros((self.d, self.d, *np.shape(args[0])))
@@ -168,11 +171,25 @@ class CompositeFunction:
         else:
             raise ValueError(f"Invalid shape {np.shape(w)} for weights.")
 
+    def grad(self, *x):
+        return np.einsum(
+            'i,ji...->j...',
+            self.w,
+            self.phi.grad(self.delta, *x, *self.xc),
+        )
+
     def div(self, *x):
         return np.einsum(
             'i,i...->...',
             self.w,
             self.phi.div(self.delta, *x, *self.xc),
+        )
+
+    def hessian(self, *x):
+        return np.einsum(
+            'i,jki...->jk...',
+            self.w,
+            self.phi.hessian(self.delta, *x, *self.xc),
         )
 
     def laplacian(self, *x):
@@ -196,8 +213,14 @@ class MultilevelCompositeFunction(list):
 
         return np.sum([f(*x) for f in self[:end]], axis=0)
 
+    def grad(self, *x):
+        return np.sum([f.grad(*x) for f in self], axis=0)
+
     def div(self, *x):
         return np.sum([f.div(*x) for f in self], axis=0)
+
+    def hessian(self, *x):
+        return np.sum([f.hessian(*x) for f in self], axis=0)
 
     def laplacian(self, *x):
         return np.sum([f.laplacian(*x) for f in self], axis=0)

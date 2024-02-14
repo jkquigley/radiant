@@ -8,7 +8,7 @@ class InterpolationSolver(BaseSolver):
     def gen_mat(self):
         self.mat = self.phi(self.delta, *self.xc, *self.xc)
 
-    def gen_rhs(self, func, guess):
+    def gen_rhs(self, func, guess=None):
         if guess is None:
             self.b = func(*self.xc)
         else:

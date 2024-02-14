@@ -8,12 +8,12 @@ class MultilevelSolver:
         ]
         self.outer = outer
 
-    def solve(self, func):
+    def solve(self, *funcs):
         guess = MultilevelCompositeFunction()
 
         for _ in range(self.outer):
             for solver in self.solvers:
-                guess.append(solver.solve(func, guess=guess))
+                guess.append(solver.solve(*funcs, guess=guess))
 
         return guess
 

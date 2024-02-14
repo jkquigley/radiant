@@ -22,14 +22,14 @@ class BaseSolver:
     def gen_mat(self):
         pass
 
-    def gen_rhs(self, func, guess):
+    def gen_rhs(self, *funcs, guess=None):
         pass
 
-    def solve(self, func, guess=None):
+    def solve(self, *funcs, guess=None):
         if self.mat is None:
             self.gen_mat()
 
-        self.gen_rhs(func, guess)
+        self.gen_rhs(*funcs, guess=None)
 
         w = cp.linalg.solve(cp.array(self.mat), cp.array(self.b)).get()
 

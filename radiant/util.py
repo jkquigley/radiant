@@ -2,7 +2,7 @@ import numpy as np
 
 
 def dot(a, b):
-    return np.einsum('i...,i...->...', a, b)
+    return np.sum(a * b, axis=0)
 
 
 def error(u, approx, integrator):
@@ -22,12 +22,12 @@ def flatten(x):
 def gridinc(ranges, inc, flat=False):
     if flat:
         return list(map(flatten, np.meshgrid(*[
-            np.arange(a, b + inc * int(b - a), inc * int(b - a))
+            np.arange(a, b + inc * int(b - a) / 2, inc * int(b - a))
             for a, b in ranges
         ])))
     else:
         return np.meshgrid(*[
-            np.arange(a, b + inc * int(b - a), inc * int(b - a))
+            np.arange(a, b + inc * int(b - a) / 2, inc * int(b - a))
             for a, b in ranges
         ])
 

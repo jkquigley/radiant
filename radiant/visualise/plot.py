@@ -26,7 +26,7 @@ def overlay(ranges, *funcs, n=1000, labels=None, **kwargs):
         for f, label in zip(funcs, labels):
             ax.plot_surface(*x, f(*x), label=label, cmap='spring')
     else:
-        raise ValueError(f"Cannot plot of {len(ranges)} ranges.")
+        raise ValueError(f"Cannot plot {len(ranges)} dimensions.")
 
     if legend:
         plt.legend()
@@ -69,17 +69,24 @@ def spread(
             ax.plot_surface(*x, f(*x), cmap='spring')
             ax.set_title(title)
     else:
-        raise ValueError(f"Cannot plot of {len(ranges)} ranges.")
+        raise ValueError(f"Cannot plot {len(ranges)} dimensions.")
 
     plt.subplots_adjust(wspace=wspace, hspace=hspace)
     plt.show()
 
 
-def thinning(centres, delta, **kwargs):
+def thinning(deltas, xcs, d, **kwargs):
     fig = plt.figure(**kwargs)
-    ax = fig.add_subplot(111)
-    for c, d in zip(centres, delta):
-        ax.plot(c, (d * np.ones_like(c)), 'b.')
+
+    if d == 1:
+        ax = fig.add_subplot(111)
+    # elif d == 2:
+    #     ax = fig.add_subplot(111, projection='3d')
+    else:
+        raise ValueError(f"Cannot plot {d} dimensions.")
+
+    for delta, xc in zip(deltas, xcs):
+        ax.scatter(*xc, delta * np.ones_like(xc[0]))
 
     plt.yscale('log')
     plt.show()
