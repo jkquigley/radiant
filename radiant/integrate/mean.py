@@ -12,4 +12,4 @@ class MeanIntegrator(BaseIntegrator):
         self.x = gridn(self.ranges, self.accuracy)
 
     def __call__(self, func):
-        return (self.measure * cp.mean(cp.array(func(*self.x)))).get()
+        return self.measure * (cp.mean(cp.array(func(*self.x)))).get()

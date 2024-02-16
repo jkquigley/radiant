@@ -24,17 +24,23 @@ def ml_animate(ranges, exact, approx, n=1000, interval=1000, **kwargs):
             ) + plt.rcParams['axes.ymargin'],
         )
 
-        error = np.abs(exact(*x) - approx(*x, end=0))
-        exact_line, = ax0.plot(*x, exact(*x))
-        approx_line, = ax0.plot(*x, approx(*x, end=0))
+        exact_val = exact(*x)
+        error = np.abs(exact_val)
+        exact_line, = ax0.plot(*x, exact_val, label="Exact")
+        approx_line, = ax0.plot(*x, np.zeros_like(x[0]), label="Approximate")
         error_line, = ax1.plot(*x, error)
         n_label = ax0.text(
             0, 1, "$n = 0$", transform=ax0.transAxes, fontsize=13
         )
 
+        ax0.set_title("Approximation")
+        ax1.set_title("Abs. Error")
+        ax0.legend()
+
         def func(i):
-            approx_line.set_ydata(approx(*x, end=i))
-            error_line.set_ydata(np.abs(exact(*x) - approx(*x, end=i)))
+            approx_val = approx[:i](*x)
+            approx_line.set_ydata(approx_val)
+            error_line.set_ydata(np.abs(exact_val - approx_val))
             n_label.set_text(f"$n = {i}$")
 
             return approx_line, error_line, n_label,

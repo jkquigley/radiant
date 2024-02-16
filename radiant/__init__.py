@@ -1,4 +1,6 @@
 __all__ = [
+    "WeightedFunction",
+    "Wendland",
     "integrate",
     "solve",
     "error",
@@ -6,9 +8,9 @@ __all__ = [
     "gridn",
     "animate",
     "plot",
-    "Wendland",
 ]
 
+from .function import WeightedFunction
 from .function import Wendland
 from .integrate import integrate
 from .solve import solve

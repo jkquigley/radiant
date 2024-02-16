@@ -3,9 +3,8 @@ from scipy import integrate
 
 
 class QuadIntegrator(BaseIntegrator):
-    def __init__(self, ranges, epsabs=1.49e-8, epsrel=1.49e-8):
+    def __init__(self, ranges):
         super().__init__(ranges)
-        self.opts = {'epsabs': epsabs, 'epsrel': epsrel}
 
     def __call__(self, func):
-        return integrate.nquad(func, self.ranges, opts=self.opts)[0]
+        return integrate.nquad(func, self.ranges)[0]

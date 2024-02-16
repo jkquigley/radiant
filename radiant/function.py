@@ -10,10 +10,15 @@ def epsdiv(a, b, eps=1e-10):
 
 
 class Wendland:
-    def __init__(self, d, k, delta, *xc, w=None):
+    def __init__(self, d, k, delta, xc):
         if d <= 0:
             raise ValueError(
                 f"Dimension 'd' must be a positive integer but {d} was given."
+            )
+
+        if d != len(xc):
+            raise ValueError(
+                f"Expected {d} elements in argument 'xc' but got {len(xc)}."
             )
 
         l = d // 2 + k + 1
@@ -53,9 +58,10 @@ class Wendland:
             )
 
         self.d = d
+        self.k = k
         self.delta = delta
         self.xc = tuple(map(flatten, xc))
-        self.w = w
+        self.n = np.size(self.xc[0])
 
         self.coefs = polynomial.polymul(prefix, coefs)
 
@@ -68,8 +74,12 @@ class Wendland:
         ))
         self.allowed_derivatives.add(None)
 
-    def __call__(self, *x, w=None, m=None):
-        if len(x) != self.d * 2:
+    def __getitem__(self, item):
+        xc = [c[item] for c in self.xc]
+        return self.__class__(self.d, self.k, self.delta, xc)
+
+    def __call__(self, *x, m=None):
+        if len(x) != self.d:
             raise ValueError(
                 f"Function requires {self.d} coordinate arguments but "
                 f"{len(x)} were given."
@@ -79,7 +89,7 @@ class Wendland:
         x = tuple(map(flatten, x))
 
         diffs = [
-            np.subtract.outer(x[i], self.xc[i]).T  # Transpose so xc on axis 0.
+            np.subtract.outer(x[i], self.xc[i]).T  # .T to put xc on axis 0.
             for i in range(self.d)
         ]
         normed_diff = np.sqrt(np.sum([diff ** 2 for diff in diffs], axis=0))
@@ -117,14 +127,7 @@ class Wendland:
         else:
             raise ValueError(f"Unsupported derivative m = {m}.")
 
-        if w is None:
-            return np.reshape(np.where(1 - r >= 0, unsupported, 0), shape)
-        else:
-            return np.einsum(
-                'i,i...->...',
-                w,
-                np.reshape(np.where(1 - r >= 0, unsupported, 0), shape)
-            )
+        return np.reshape(np.where(1 - r >= 0, unsupported, 0), shape)
 
     def grad(self, *x):
         return np.array([
@@ -156,18 +159,51 @@ class Wendland:
         ], axis=0)
 
 
+class WeightedFunction(np.ndarray):
+    def __new__(cls, w, func):
+        obj = np.asarray(w).view(cls)
+        obj.func = func
+        return obj
+
+    def __array_finalize__(self, obj):
+        if obj is None: return
+        self.func = getattr(obj, 'func', None)
+
+    def __call__(self, *x, m=None):
+        return np.einsum(
+            'i,i...->...', self, self.func(*x, m=m)
+        )
+
+    def grad(self, *x):
+        return np.einsum(
+            'i,ji...->j...', self, self.func.grad(*x)
+        )
+
+    def div(self, *x):
+        return np.einsum(
+            'i,i...->...', self, self.func.div(*x)
+        )
+
+    def hessian(self, *x):
+        return np.einsum(
+            'i,jki...->jk...', self, self.func.hessian(*x)
+        )
+
+    def laplacian(self, *x):
+        return np.einsum(
+            'i,i...->...', self, self.func.laplacian(*x)
+        )
+
+
 class CompositeFunction(list):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args):
+        super().__init__(*args)
 
-    def __call__(self, *x, end=None):
-        if end is None:
-            end = len(self)
+    def __getitem__(self, item):
+        return self.__class__(super().__getitem__(item))
 
-        if len(self[:end]) == 0:
-            return np.zeros_like(x[0])
-
-        return np.sum([f(*x) for f in self[:end]], axis=0)
+    def __call__(self, *x, m=None):
+        return np.sum([f(*x, m=m) for f in self], axis=0)
 
     def grad(self, *x):
         return np.sum([f.grad(*x) for f in self], axis=0)
@@ -179,4 +215,4 @@ class CompositeFunction(list):
         return np.sum([f.hessian(*x) for f in self], axis=0)
 
     def laplacian(self, *x):
-        return np.sum([f.laplacian(*x) for f in self], axis=0)
+        return np.sum([f.lapalcian(*x) for f in self], axis=0)

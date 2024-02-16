@@ -1,11 +1,11 @@
 __all__ = [
     "CollocationSolver",
-    "HelmholtzSolver",
+    "GalerkinSolver",
     "InterpolationSolver",
     "MultilevelSolver",
 ]
 
 from .collocation import CollocationSolver
-from .helmholtz import HelmholtzSolver
+from .galerkin import GalerkinSolver
 from .interpolate import InterpolationSolver
 from .multilevel import MultilevelSolver

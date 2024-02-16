@@ -3,51 +3,41 @@ import numpy as np
 
 
 class CollocationSolver(BaseSolver):
-    def __init__(self, operators, filters, phi, delta, *xc):
-        if len(operators) != len(filters):
+    def __init__(self, d, k, delta, xc, operators, idx_funcs):
+        super().__init__(d, k, delta, xc)
+
+        if len(operators) != len(idx_funcs):
             raise ValueError(
-                f"Expected {len(operators)} filters but {len(filters)} were "
-                f"provided."
+                f"Expected {len(operators)} index filters but got "
+                f"{len(idx_funcs)} instead."
             )
 
-        super().__init__(phi, delta, *xc)
-
         self.operators = operators
-        self.filters = filters
+        self.idxs = [idx_func(xc) for idx_func in idx_funcs]
 
     def gen_mat(self):
         mats = []
-        for op, fil in zip(self.operators, self.filters):
-            if fil is None:
-                filtered_xc = self.xc
-            else:
-                filtered_xc = tuple(map(
-                    lambda arr: fil(arr, self.xc), self.xc
-                ))
+        for op, idx in zip(self.operators, self.idxs):
+            mats.append(op(self.phi[idx], *self.phi.xc))
 
-            mats.append(op(self.phi, self.delta, *self.xc, *filtered_xc))
+        return np.vstack(mats)
 
-        self.mat = np.vstack(mats)
-
-    def gen_rhs(self, *funcs, guess=None):
-        if len(funcs) != len(self.operators):
+    def gen_rhs(self, *funcs):
+        if len(funcs) < len(self.operators):
             raise ValueError(
-                f"Expected {len(self.operators)} functions but {len(funcs)} "
-                f"were provided."
+                f"Expected {len(self.operators)} or more functions but got "
+                f"{len(funcs)} instead."
             )
 
+        fs = funcs[:len(self.operators)]
+        gs = funcs[len(self.operators):]
+
         vecs = []
-        for f, fil in zip(funcs, self.filters):
-            if fil is None:
-                filtered_xc = self.xc
-            else:
-                filtered_xc = tuple(map(
-                    lambda arr: fil(arr, self.xc), self.xc
-                ))
+        for f, idx in zip(fs, self.idxs):
+            xc = [c[idx] for c in self.phi.xc]
+            vecs.append(f(*xc) - np.sum([
+                g(*xc)
+                for g in gs[len(self.operators):]
+            ], axis=0))
 
-            if guess is None:
-                vecs.append(f(*filtered_xc))
-            else:
-                vecs.append(f(*filtered_xc) - guess(*filtered_xc))
-
-        self.b = np.hstack(vecs)
+        return np.hstack(vecs)

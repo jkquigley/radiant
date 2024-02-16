@@ -1,21 +1,22 @@
-from ..function import MultilevelCompositeFunction
+from ..function import CompositeFunction
 
 
 class MultilevelSolver:
-    def __init__(self, solver, phi, delta, xcs, *solver_args, outer=1):
+    def __init__(self, d, k, deltas, xcs, outer, solver, *solver_args):
         self.solvers = [
-            solver(*solver_args, phi, d, *c) for c, d in zip(xcs, delta)
+            solver(d, k, delta, xc, *solver_args)
+            for xc, delta in zip(xcs, deltas)
         ]
         self.outer = outer
 
     def solve(self, *funcs):
-        guess = MultilevelCompositeFunction()
+        solution = CompositeFunction()
 
         for _ in range(self.outer):
             for solver in self.solvers:
-                guess.append(solver.solve(*funcs, guess=guess))
+                solution.append(solver.solve(*funcs, solution))
 
-        return guess
+        return solution
 
     def cond(self):
         return [s.cond() for s in self.solvers]
