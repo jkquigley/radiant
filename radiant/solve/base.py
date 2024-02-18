@@ -1,5 +1,5 @@
 from ..function import Wendland
-from ..function import WeightedFunction
+from ..function import CompositeFunction
 import cupy as cp
 import numpy as np
 
@@ -20,9 +20,11 @@ class BaseSolver:
             self.mat = self.gen_mat()
 
         b = self.gen_rhs(*funcs)
-        w = cp.linalg.solve(cp.array(self.mat), cp.array(b)).get()
 
-        return WeightedFunction(w, self.phi)
+        return CompositeFunction([(
+            cp.linalg.solve(cp.array(self.mat), cp.array(b)).get(),
+            self.phi,
+        )])
 
     def cond(self):
         if self.mat is None:

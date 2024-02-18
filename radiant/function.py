@@ -78,7 +78,7 @@ class Wendland:
         xc = [c[item] for c in self.xc]
         return self.__class__(self.d, self.k, self.delta, xc)
 
-    def __call__(self, *x, m=None):
+    def __call__(self, *x, w=None, m=None):
         if len(x) != self.d:
             raise ValueError(
                 f"Function requires {self.d} coordinate arguments but "
@@ -127,77 +127,43 @@ class Wendland:
         else:
             raise ValueError(f"Unsupported derivative m = {m}.")
 
-        return np.reshape(np.where(1 - r >= 0, unsupported, 0), shape)
+        if w is None:
+            return np.reshape(np.where(1 - r >= 0, unsupported, 0), shape)
+        else:
+            return np.einsum(
+                'i,i...->...',
+                w,
+                np.reshape(np.where(1 - r >= 0, unsupported, 0), shape)
+            )
 
-    def reduce(self, *x, m=None):
-        return np.sum(self.__call__(*x, m=m), axis=0)
-
-    def grad(self, *x):
+    def grad(self, *x, w=None):
         return np.array([
-            self.__call__(*x, m=i) for i in range(self.d)
+            self.__call__(*x, w=w, m=i) for i in range(self.d)
         ])
 
-    def div(self, *x):
+    def div(self, *x, w=None):
         return np.sum([
-            self.__call__(*x, m=i)
+            self.__call__(*x, w=w, m=i)
             for i in range(self.d)
         ], axis=0)
 
-    def hessian(self, *x):
+    def hessian(self, *x, w=None):
         mat = np.zeros((self.d, self.d, *np.shape(x[0])))
 
         for i in range(self.d):
-            mat[i, i] = self.__call__(*x, m=(i, i))
+            mat[i, i] = self.__call__(*x, w=w, m=(i, i))
 
             for j in range(i):
-                mat[i, j] = self.__call__(*x, m=(i, j))
+                mat[i, j] = self.__call__(*x, w=w, m=(i, j))
                 mat[j, i] = mat[i, j]
 
         return mat
 
-    def laplacian(self, *x):
+    def laplacian(self, *x, w=None):
         return np.sum([
-            self.__call__(*x, m=(i, i))
+            self.__call__(*x, w=w, m=(i, i))
             for i in range(self.d)
         ], axis=0)
-
-
-class WeightedFunction(np.ndarray):
-    def __new__(cls, w, func):
-        obj = np.asarray(w).view(cls)
-        obj.func = func
-        return obj
-
-    def __array_finalize__(self, obj):
-        if obj is None:
-            return
-
-        self.func = getattr(obj, 'func', None)
-
-    def __call__(self, *x, m=None):
-        return np.einsum(
-            'i,i...->...', self, self.func(*x, m=m)
-        )
-
-    def grad(self, *x):
-        return np.einsum(
-            'i,ji...->j...', self, self.func.grad(*x)
-        )
-
-    def div(self, *x):
-        return np.einsum(
-            'i,i...->...', self, self.func.div(*x)
-        )
-
-    def hessian(self, *x):
-        return np.einsum(
-            'i,jki...->jk...', self, self.func.hessian(*x)
-        )
-
-    def laplacian(self, *x):
-        return np.einsum(
-            'i,i...->...', self, self.func.laplacian(*x)
-        )
 
 
 class CompositeFunction(list):
@@ -208,16 +174,16 @@ class CompositeFunction(list):
         return self.__class__(super().__getitem__(item))
 
     def __call__(self, *x, m=None):
-        return np.sum([f(*x, m=m) for f in self], axis=0)
+        return np.sum([f(*x, w=w, m=m) for w, f in self], axis=0)
 
     def grad(self, *x):
-        return np.sum([f.grad(*x) for f in self], axis=0)
+        return np.sum([f.grad(*x, w=w) for w, f in self], axis=0)
 
     def div(self, *x):
-        return np.sum([f.div(*x) for f in self], axis=0)
+        return np.sum([f.div(*x, w=w) for w, f in self], axis=0)
 
     def hessian(self, *x):
-        return np.sum([f.hessian(*x) for f in self], axis=0)
+        return np.sum([f.hessian(*x, w=w) for w, f in self], axis=0)
 
     def laplacian(self, *x):
-        return np.sum([f.laplacian(*x) for f in self], axis=0)
+        return np.sum([f.laplacian(*x, w=w) for w, f in self], axis=0)

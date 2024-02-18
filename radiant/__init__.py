@@ -1,6 +1,4 @@
 __all__ = [
-    "WeightedFunction",
-    "TemporalWendland",
     "Wendland",
     "integrate",
     "solve",
@@ -11,8 +9,6 @@ __all__ = [
     "plot",
 ]
 
-from .function import WeightedFunction
-from .function import TemporalWendland
 from .function import Wendland
 from .integrate import integrate
 from .solve import solve

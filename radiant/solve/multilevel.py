@@ -14,7 +14,7 @@ class MultilevelSolver:
 
         for _ in range(self.outer):
             for solver in self.solvers:
-                solution.append(solver.solve(*funcs, solution))
+                solution += solver.solve(*funcs, solution)
 
         return solution
 
