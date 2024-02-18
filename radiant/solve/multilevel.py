@@ -5,7 +5,7 @@ class MultilevelSolver:
     def __init__(self, d, k, deltas, xcs, outer, solver, *solver_args):
         self.solvers = [
             solver(d, k, delta, xc, *solver_args)
-            for xc, delta in zip(xcs, deltas)
+            for delta, xc in zip(deltas, xcs)
         ]
         self.outer = outer
 

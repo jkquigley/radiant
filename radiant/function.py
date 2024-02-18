@@ -129,6 +129,9 @@ class Wendland:
 
         return np.reshape(np.where(1 - r >= 0, unsupported, 0), shape)
 
+    def reduce(self, *x, m=None):
+        return np.sum(self.__call__(*x, m=m), axis=0)
+
     def grad(self, *x):
         return np.array([
             self.__call__(*x, m=i) for i in range(self.d)
@@ -166,7 +169,9 @@ class WeightedFunction(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
-        if obj is None: return
+        if obj is None:
+            return
+
         self.func = getattr(obj, 'func', None)
 
     def __call__(self, *x, m=None):
@@ -215,4 +220,4 @@ class CompositeFunction(list):
         return np.sum([f.hessian(*x) for f in self], axis=0)
 
     def laplacian(self, *x):
-        return np.sum([f.lapalcian(*x) for f in self], axis=0)
+        return np.sum([f.laplacian(*x) for f in self], axis=0)

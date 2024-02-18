@@ -11,7 +11,9 @@ def ml_animate(ranges, exact, approx, n=1000, interval=1000, **kwargs):
     if len(ranges) == 1:
         ax0 = fig.add_subplot(121)
         ax1 = fig.add_subplot(122)
-        plt.margins(x=0.)
+
+        ax0.margins(x=0.)
+        ax1.margins(x=0.)
 
         ax0.set_ylim(
             bottom=np.min(approx(*x)) - plt.rcParams['axes.ymargin'],
