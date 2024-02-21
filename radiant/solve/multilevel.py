@@ -20,3 +20,6 @@ class MultilevelSolver:
 
     def cond(self):
         return [s.cond() for s in self.solvers]
+
+    def bandwidth(self):
+        return [s.bandwidth() for s in self.solvers]

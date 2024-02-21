@@ -16,11 +16,11 @@ class CollocationSolver(BaseSolver):
         self.idxs = [idx_func(xc) for idx_func in idx_funcs]
 
     def gen_mat(self):
-        mats = []
+        mat = np.zeros((self.phi.n, self.phi.n))
         for op, idx in zip(self.operators, self.idxs):
-            mats.append(op(self.phi[idx])(*self.phi.xc))
+            mat[idx, :] = op(self.phi[idx])(*self.phi.xc)
 
-        return np.vstack(mats)
+        return mat
 
     def gen_rhs(self, *funcs):
         if len(funcs) < len(self.operators):
@@ -32,9 +32,9 @@ class CollocationSolver(BaseSolver):
         fs = funcs[:len(self.operators)]
         gs = funcs[len(self.operators):]
 
-        vecs = []
+        vec = np.zeros(self.phi.n)
         for f, op, idx in zip(fs, self.operators, self.idxs):
             xc = [c[idx] for c in self.phi.xc]
-            vecs.append(f(*xc) - np.sum([op(g)(*xc) for g in gs], axis=0))
+            vec[idx] = f(*xc) - np.sum([op(g)(*xc) for g in gs], axis=0)
 
-        return np.hstack(vecs)
+        return vec

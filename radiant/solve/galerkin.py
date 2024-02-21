@@ -12,7 +12,7 @@ def _helmholtz_bilinear_integrand_factory(u, v):
     return func
 
 
-def _laplace_bilinear_integrand_factory(u, v):
+def _poisson_bilinear_integrand_factory(u, v):
     def func(*x):
         return dot(
             u.grad(*x), v.grad(*x)
@@ -30,7 +30,7 @@ def _l2_integrand_factory(u, v):
 
 _bilinear_integrand_factory_dict = {
     "helmholtz": _helmholtz_bilinear_integrand_factory,
-    "laplace": _laplace_bilinear_integrand_factory,
+    "poisson": _poisson_bilinear_integrand_factory,
 }
 
 

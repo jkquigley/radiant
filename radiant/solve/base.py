@@ -2,6 +2,7 @@ from ..function import Wendland
 from ..function import CompositeFunction
 import cupy as cp
 import numpy as np
+import scipy as sp
 
 
 class BaseSolver:
@@ -31,3 +32,9 @@ class BaseSolver:
             return -1.
         else:
             return np.linalg.cond(self.mat)
+
+    def bandwidth(self):
+        if self.mat is None:
+            return -1.
+        else:
+            return sp.linalg.bandwidth(self.mat)
