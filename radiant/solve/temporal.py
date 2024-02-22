@@ -19,14 +19,13 @@ class TemporalSolver(CollocationSolver):
             self.mat = self.gen_mat()
 
         t = 0.
-        u0 = f(*self.phi.xc)
-        un = [u0]
+        un = [f(*self.phi.xc)]
 
         mat = np.eye(*np.shape(self.mat)) - self.dt * self.mat
 
         for i in range(1, self.n):
             t += self.dt
-            rhs = un[-1]
+            rhs = np.copy(un[-1])
 
             for g, idx in zip(funcs, self.idxs[1:]):
                 xc = [c[idx] for c in self.phi.xc]
