@@ -3,11 +3,11 @@ __all__ = [
     "GalerkinSolver",
     "InterpolationSolver",
     "MultilevelSolver",
-    "TemporalSolver",
+    "MOLCollocation",
 ]
 
 from .collocation import CollocationSolver
 from .galerkin import GalerkinSolver
 from .interpolate import InterpolationSolver
 from .multilevel import MultilevelSolver
-from .temporal import TemporalSolver
+from .mol_collocation import MOLCollocation

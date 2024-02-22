@@ -2,9 +2,9 @@ from .collocation import CollocationSolver
 import numpy as np
 
 
-class TemporalSolver(CollocationSolver):
-    def __init__(self, d, k, delta, xc, operators, idx_funcs, dt, n):
-        super().__init__(d, k, delta, xc, operators, idx_funcs)
+class MOLCollocation(CollocationSolver):
+    def __init__(self, d, k, delta, xc, operators, idx_funcs, dt, n, **kwargs):
+        super().__init__(d, k, delta, xc, operators, idx_funcs, **kwargs)
         self.dt = dt
         self.n = n
 

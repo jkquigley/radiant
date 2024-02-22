@@ -6,8 +6,8 @@ import scipy as sp
 
 
 class BaseSolver:
-    def __init__(self, d, k, delta, xc):
-        self.phi = Wendland(d, k, delta, xc)
+    def __init__(self, d, k, delta, xc, rbf=Wendland):
+        self.phi = rbf(d, k, delta, xc)
         self.mat = None
 
     def gen_mat(self):

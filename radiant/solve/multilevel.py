@@ -2,9 +2,9 @@ from ..function import CompositeFunction
 
 
 class MultilevelSolver:
-    def __init__(self, d, k, deltas, xcs, outer, solver, *solver_args):
+    def __init__(self, d, k, deltas, xcs, outer, solver, *args, **kwargs):
         self.solvers = [
-            solver(d, k, delta, xc, *solver_args)
+            solver(d, k, delta, xc, *args, **kwargs)
             for delta, xc in zip(deltas, xcs)
         ]
         self.outer = outer

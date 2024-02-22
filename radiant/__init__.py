@@ -1,4 +1,5 @@
 __all__ = [
+    "TemporalWendland",
     "Wendland",
     "integrate",
     "solve",
@@ -9,6 +10,7 @@ __all__ = [
     "plot",
 ]
 
+from .function import TemporalWendland
 from .function import Wendland
 from .integrate import integrate
 from .solve import solve

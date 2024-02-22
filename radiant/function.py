@@ -74,25 +74,20 @@ class Wendland:
         ))
         self.allowed_derivatives.add(None)
 
+        self.nargs = d
+
     def __getitem__(self, item):
         xc = [c[item] for c in self.xc]
         return self.__class__(self.d, self.k, self.delta, xc)
 
     def __call__(self, *x, w=None, m=None):
-        if len(x) != self.d:
+        if len(x) != self.nargs:
             raise ValueError(
-                f"Function requires {self.d} coordinate arguments but "
+                f"Function requires {self.nargs} coordinate arguments but "
                 f"{len(x)} were given."
             )
 
-        shape = (*np.shape(self.xc[0]), *np.shape(x[0]))
-        x = tuple(map(flatten, x))
-
-        diffs = [
-            np.subtract.outer(x[i], self.xc[i]).T  # .T to put xc on axis 0.
-            for i in range(self.d)
-        ]
-        normed_diff = np.sqrt(np.sum([diff ** 2 for diff in diffs], axis=0))
+        diffs, normed_diff, shape = self.diff(*x)
         r = normed_diff / self.delta
 
         if m is None:
@@ -136,16 +131,22 @@ class Wendland:
                 np.reshape(np.where(1 - r >= 0, unsupported, 0), shape)
             )
 
+    def diff(self, *x):
+        shape = (*np.shape(self.xc[0]), *np.shape(x[0]))
+        x = tuple(map(flatten, x))
+
+        diffs = [
+            np.subtract.outer(x[i], self.xc[i]).T  # .T to put xc on axis 0.
+            for i in range(self.d)
+        ]
+        normed_diff = np.sqrt(np.sum([diff ** 2 for diff in diffs], axis=0))
+
+        return diffs, normed_diff, shape
+
     def grad(self, *x, w=None):
         return np.array([
             self.__call__(*x, w=w, m=i) for i in range(self.d)
         ])
-
-    def div(self, *x, w=None):
-        return np.sum([
-            self.__call__(*x, w=w, m=i)
-            for i in range(self.d)
-        ], axis=0)
 
     def hessian(self, *x, w=None):
         mat = np.zeros((self.d, self.d, *np.shape(x[0])))
@@ -166,6 +167,38 @@ class Wendland:
         ], axis=0)
 
 
+class TemporalWendland(Wendland):
+    def __init__(self, d, k, delta, txc):
+        super().__init__(d + 1, k, delta, txc)
+
+    def __getitem__(self, item):
+        xc = [c[item] for c in self.xc]
+        return self.__class__(self.d - 1, self.k, self.delta, xc)
+
+    def grad(self, *x, w=None):
+        return np.array([
+            self.__call__(*x, w=w, m=i) for i in range(1, self.d)
+        ])
+
+    def hessian(self, *x, w=None):
+        mat = np.zeros((self.d - 1, self.d - 1, *np.shape(x[0])))
+
+        for i in range(1, self.d):
+            mat[i-1, i-1] = self.__call__(*x, w=w, m=(i, i))
+
+            for j in range(i):
+                mat[i-1, j-1] = self.__call__(*x, w=w, m=(i, j))
+                mat[j-1, i-1] = mat[i-1, j-1]
+
+        return mat
+
+    def laplacian(self, *x, w=None):
+        return np.sum([
+            self.__call__(*x, w=w, m=(i, i))
+            for i in range(1, self.d)
+        ], axis=0)
+
+
 class CompositeFunction(list):
     def __init__(self, *args):
         super().__init__(*args)
@@ -178,9 +211,6 @@ class CompositeFunction(list):
 
     def grad(self, *x):
         return np.sum([f.grad(*x, w=w) for w, f in self], axis=0)
-
-    def div(self, *x):
-        return np.sum([f.div(*x, w=w) for w, f in self], axis=0)
 
     def hessian(self, *x):
         return np.sum([f.hessian(*x, w=w) for w, f in self], axis=0)

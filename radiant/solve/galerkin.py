@@ -1,22 +1,18 @@
 from .base import BaseSolver
-import numpy as np
 from ..util import dot
+import numpy as np
 
 
 def _helmholtz_bilinear_integrand_factory(u, v):
     def func(*x):
-        return dot(
-            u.grad(*x), v.grad(*x)
-        ) - u(*x) * v(*x)
+        return dot(u.grad(*x), v.grad(*x)) - u(*x) * v(*x)
 
     return func
 
 
 def _poisson_bilinear_integrand_factory(u, v):
     def func(*x):
-        return dot(
-            u.grad(*x), v.grad(*x)
-        ) - u(*x) * v(*x)
+        return dot(u.grad(*x), v.grad(*x))
 
     return func
 
@@ -35,8 +31,8 @@ _bilinear_integrand_factory_dict = {
 
 
 class GalerkinSolver(BaseSolver):
-    def __init__(self, d, k, delta, xc, integrator, equation):
-        super().__init__(d, k, delta, xc)
+    def __init__(self, d, k, delta, xc, integrator, equation, **kwargs):
+        super().__init__(d, k, delta, xc, **kwargs)
 
         self.integrator = integrator
         self.bilinear_integrand_factory = _bilinear_integrand_factory_dict[

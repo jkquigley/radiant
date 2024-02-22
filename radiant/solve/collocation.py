@@ -3,8 +3,8 @@ import numpy as np
 
 
 class CollocationSolver(BaseSolver):
-    def __init__(self, d, k, delta, xc, operators, idx_funcs):
-        super().__init__(d, k, delta, xc)
+    def __init__(self, d, k, delta, xc, operators, idx_funcs, **kwargs):
+        super().__init__(d, k, delta, xc, **kwargs)
 
         if len(operators) != len(idx_funcs):
             raise ValueError(
