@@ -17,8 +17,8 @@ class CollocationSolver(BaseSolver):
 
     def gen_mat(self):
         mat = np.zeros((self.phi.n, self.phi.n))
-        for op, idx in zip(self.operators, self.idxs):
-            mat[idx, :] = op(self.phi[idx])(*self.phi.xc)
+        for op, i in zip(self.operators, self.idxs):
+            mat[i, :] = op(self.phi[i])(*self.phi.xc)
 
         return mat
 
@@ -33,8 +33,8 @@ class CollocationSolver(BaseSolver):
         gs = funcs[len(self.operators):]
 
         vec = np.zeros(self.phi.n)
-        for f, op, idx in zip(fs, self.operators, self.idxs):
-            xc = [c[idx] for c in self.phi.xc]
-            vec[idx] = f(*xc) - np.sum([op(g)(*xc) for g in gs], axis=0)
+        for f, op, i in zip(fs, self.operators, self.idxs):
+            xc = [c[i] for c in self.phi.xc]
+            vec[i] = f(*xc) - np.sum([op(g)(*xc) for g in gs], axis=0)
 
         return vec
