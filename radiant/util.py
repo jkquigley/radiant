@@ -25,12 +25,12 @@ def gridinc(ranges, incs, flat=False):
 
     if flat:
         return list(map(flatten, np.meshgrid(*[
-            np.arange(a, b + int(inc * (b - a)) / 2, int(inc * (b - a)))
+            np.arange(a, b + (inc * (b - a)) / 2, inc * (b - a))
             for inc, (a, b) in zip(incs, ranges)
         ])))
     else:
         return np.meshgrid(*[
-            np.arange(a, b + int(inc * (b - a)) / 2, int(inc * (b - a)))
+            np.arange(a, b + (inc * (b - a)) / 2, inc * (b - a))
             for inc, (a, b) in zip(incs, ranges)
         ])
 
