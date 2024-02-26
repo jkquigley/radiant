@@ -1,4 +1,3 @@
-from ..function import Wendland
 from ..function import CompositeFunction
 import cupy as cp
 import numpy as np
@@ -6,8 +5,8 @@ import scipy as sp
 
 
 class BaseSolver:
-    def __init__(self, d, k, delta, xc, rbf=Wendland):
-        self.phi = rbf(d, k, delta, xc)
+    def __init__(self, phi):
+        self.phi = phi
         self.mat = None
 
     def gen_mat(self):

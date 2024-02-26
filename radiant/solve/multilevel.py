@@ -2,11 +2,8 @@ from ..function import CompositeFunction
 
 
 class MultilevelSolver:
-    def __init__(self, d, k, deltas, xcs, outer, solver, *args, **kwargs):
-        self.solvers = [
-            solver(d, k, delta, xc, *args, **kwargs)
-            for delta, xc in zip(deltas, xcs)
-        ]
+    def __init__(self, phis, outer, solver, *args):
+        self.solvers = [solver(phi, *args) for phi in phis]
         self.outer = outer
 
     def solve(self, *funcs):

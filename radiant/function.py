@@ -167,6 +167,17 @@ class Wendland:
         ], axis=0)
 
 
+class PeriodicWendland(Wendland):
+    def __init__(self, d, k, delta, xc, a=-0.5, b=0.5):
+        super().__init__(d, k, delta, xc)
+        self.a = a
+        self.interval = b - a
+
+    def __call__(self, *x, **kwargs):
+        x = [(i - self.a) % self.interval + self.a for i in x]
+        return super().__call__(*x, **kwargs)
+
+
 class TemporalWendland(Wendland):
     def __init__(self, d, k, delta, txc):
         super().__init__(d + 1, k, delta, txc)

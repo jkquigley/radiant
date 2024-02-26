@@ -31,8 +31,8 @@ _bilinear_integrand_factory_dict = {
 
 
 class GalerkinSolver(BaseSolver):
-    def __init__(self, d, k, delta, xc, integrator, equation, **kwargs):
-        super().__init__(d, k, delta, xc, **kwargs)
+    def __init__(self, phi, integrator, equation):
+        super().__init__(phi)
 
         self.integrator = integrator
         self.bilinear_integrand_factory = _bilinear_integrand_factory_dict[

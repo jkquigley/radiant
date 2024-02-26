@@ -3,8 +3,8 @@ import numpy as np
 
 
 class InterpolationSolver(BaseSolver):
-    def __init__(self, d, k, delta, xc, **kwargs):
-        super().__init__(d, k, delta, xc, **kwargs)
+    def __init__(self, phi):
+        super().__init__(phi)
 
     def gen_mat(self):
         return self.phi(*self.phi.xc)
