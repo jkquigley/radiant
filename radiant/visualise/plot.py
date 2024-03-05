@@ -41,6 +41,7 @@ def spread(
         wspace=0.,
         hspace=0.,
         titles=None,
+        filename=None,
         **kwargs
 ):
     if ncols is None:
@@ -72,7 +73,10 @@ def spread(
         raise ValueError(f"Cannot plot {len(ranges)} dimensions.")
 
     plt.subplots_adjust(wspace=wspace, hspace=hspace)
-    plt.show()
+    if filename:
+        plt.savefig(filename)
+    else:
+        plt.show()
 
 
 def thinning(deltas, xcs, d, **kwargs):

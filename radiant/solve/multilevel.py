@@ -2,7 +2,7 @@ from ..function import CompositeFunction
 
 
 class MultilevelSolver:
-    def __init__(self, phis, outer, solver, *args):
+    def __init__(self, phis, solver, *args, outer=1):
         self.solvers = [solver(phi, *args) for phi in phis]
         self.outer = outer
 

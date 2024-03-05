@@ -1,5 +1,6 @@
 from .base import BaseSolver
 import numpy as np
+import scipy as sp
 
 
 class CollocationSolver(BaseSolver):
@@ -22,7 +23,7 @@ class CollocationSolver(BaseSolver):
     def gen_mat(self):
         mat = np.zeros((self.phi.n, self.phi.n))
         for op, i in zip(self.operators, self.idxs):
-            if i is not None:
+            if not (op is None or i is None):
                 mat[i, :] = op(self.phi[i])(*self.phi.xc)
 
         return mat
@@ -39,7 +40,8 @@ class CollocationSolver(BaseSolver):
 
         vec = np.zeros(self.phi.n)
         for f, op, i in zip(fs, self.operators, self.idxs):
-            xc = [c[i] for c in self.phi.xc]
-            vec[i] = f(*xc) - np.sum([op(g)(*xc) for g in gs], axis=0)
+            if not (f is None or op is None or i is None):
+                xc = [c[i] for c in self.phi.xc]
+                vec[i] = f(*xc) - np.sum([op(g)(*xc) for g in gs], axis=0)
 
         return vec

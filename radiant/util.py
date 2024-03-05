@@ -20,33 +20,37 @@ def flatten(x):
         return x
 
 
-def gridinc(ranges, incs, flat=False):
+def gridinc(ranges, incs, flat=False, unitary=False):
     if not isinstance(incs, Iterable):
         incs = (incs,) * len(ranges)
 
-    if flat:
-        return list(map(flatten, np.meshgrid(*[
-            np.arange(a, b + (inc * (b - a)) / 2, inc * (b - a))
-            for inc, (a, b) in zip(incs, ranges)
-        ])))
-    else:
-        return np.meshgrid(*[
-            np.arange(a, b + (inc * (b - a)) / 2, inc * (b - a))
+    if unitary:
+        incs = (inc * (b - a) for inc, (a, b) in zip(incs, ranges))
+
+    grid = np.meshgrid(*[
+            np.arange(a, b + inc / 2, inc)
             for inc, (a, b) in zip(incs, ranges)
         ])
 
+    if flat:
+        return list(map(flatten, grid))
+    else:
+        return grid
 
-def gridn(ranges, ns, flat=False, endpoint=True):
+
+def gridn(ranges, ns, flat=False, endpoint=True, unitary=False):
     if not isinstance(ns, Iterable):
         ns = (ns,) * len(ranges)
 
-    if flat:
-        return list(map(flatten, np.meshgrid(*[
-            np.linspace(a, b, int(n * (b - a)), endpoint=endpoint)
-            for n, (a, b) in zip(ns, ranges)
-        ])))
-    else:
-        return np.meshgrid(*[
-            np.linspace(a, b, int(n * (b - a)), endpoint=endpoint)
+    if unitary:
+        ns = (int(n * (b - a)) for n, (a, b) in zip(ns, ranges))
+
+    grid = np.meshgrid(*[
+            np.linspace(a, b, n, endpoint=endpoint)
             for n, (a, b) in zip(ns, ranges)
         ])
+
+    if flat:
+        return list(map(flatten, grid))
+    else:
+        return grid

@@ -1,4 +1,5 @@
 __all__ = [
+    "CompositeFunction",
     "PeriodicWendland",
     "TemporalWendland",
     "Wendland",
@@ -12,6 +13,7 @@ __all__ = [
     "plot",
 ]
 
+from .function import CompositeFunction
 from .function import PeriodicWendland
 from .function import TemporalWendland
 from .function import Wendland

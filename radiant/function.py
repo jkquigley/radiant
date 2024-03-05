@@ -10,7 +10,7 @@ def epsdiv(a, b, eps=1e-10):
 
 
 class Wendland:
-    def __init__(self, d, k, delta, xc):
+    def __init__(self, d, k, delta, xc, penalty=None):
         if d <= 0:
             raise ValueError(
                 f"Dimension 'd' must be a positive integer but {d} was given."
@@ -76,6 +76,11 @@ class Wendland:
 
         self.nargs = d
 
+        if penalty is None:
+            self.penalty = np.ones(d)
+        else:
+            self.penalty = penalty
+
     def __getitem__(self, item):
         xc = [c[item] for c in self.xc]
         return self.__class__(self.d, self.k, self.delta, xc)
@@ -136,7 +141,7 @@ class Wendland:
         x = tuple(map(flatten, x))
 
         diffs = [
-            np.subtract.outer(x[i], self.xc[i]).T  # .T to put xc on axis 0.
+            np.subtract.outer(x[i], self.xc[i]).T / self.penalty[i]  # .T to put xc on axis 0.
             for i in range(self.d)
         ]
         normed_diff = np.sqrt(np.sum([diff ** 2 for diff in diffs], axis=0))
@@ -168,8 +173,8 @@ class Wendland:
 
 
 class PeriodicWendland(Wendland):
-    def __init__(self, d, k, delta, xc, a=-0.5, b=0.5):
-        super().__init__(d, k, delta, xc)
+    def __init__(self, d, k, delta, xc, penalty=None, a=-0.5, b=0.5):
+        super().__init__(d, k, delta, xc, penalty=penalty)
         self.a = a
         self.interval = b - a
 
@@ -179,8 +184,8 @@ class PeriodicWendland(Wendland):
 
 
 class TemporalWendland(Wendland):
-    def __init__(self, d, k, delta, txc):
-        super().__init__(d + 1, k, delta, txc)
+    def __init__(self, d, k, delta, txc, penalty=None):
+        super().__init__(d + 1, k, delta, txc, penalty=penalty)
 
     def __getitem__(self, item):
         xc = [c[item] for c in self.xc]
