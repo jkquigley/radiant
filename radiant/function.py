@@ -10,7 +10,7 @@ def epsdiv(a, b, eps=1e-10):
 
 
 class Wendland:
-    def __init__(self, d, k, delta, xc, penalty=None):
+    def __init__(self, d, k, delta, xc):
         if d <= 0:
             raise ValueError(
                 f"Dimension 'd' must be a positive integer but {d} was given."
@@ -59,7 +59,10 @@ class Wendland:
 
         self.d = d
         self.k = k
-        self.delta = delta
+        if np.shape(delta) == ():
+            self.delta = delta * np.ones(self.d)
+        else:
+            self.delta = delta
         self.xc = tuple(map(flatten, xc))
         self.n = np.size(self.xc[0])
 
@@ -76,11 +79,6 @@ class Wendland:
 
         self.nargs = d
 
-        if penalty is None:
-            self.penalty = np.ones(d)
-        else:
-            self.penalty = penalty
-
     def __getitem__(self, item):
         xc = [c[item] for c in self.xc]
         return self.__class__(self.d, self.k, self.delta, xc)
@@ -92,15 +90,25 @@ class Wendland:
                 f"{len(x)} were given."
             )
 
-        diffs, normed_diff, shape = self.diff(*x)
-        r = normed_diff / self.delta
+        shape = (*np.shape(self.xc[0]), *np.shape(x[0]))
+        x = tuple(map(flatten, x))
+
+        diffs = [  # .T to put xc on axis 0.
+            np.subtract.outer(x[i], self.xc[i]).T
+            for i in range(self.d)
+        ]
+        r = np.sqrt(np.sum(
+            [(diff / delta) ** 2 for diff, delta in zip(diffs, self.delta)],
+            axis=0,
+        ))
 
         if m is None:
             unsupported = polynomial.polyval(r, self.coefs)
         elif m in self.allowed_first_derivatives:
             deriv_coefs = polynomial.polyder(self.coefs)
-            deriv_scale = epsdiv(diffs[m], self.delta * normed_diff)
-            unsupported = deriv_scale * polynomial.polyval(r, deriv_coefs)
+            unsupported = epsdiv(
+                diffs[m], (self.delta[m] ** 2) * r
+            ) * polynomial.polyval(r, deriv_coefs)
         elif m in self.allowed_second_derivatives:
             xi, xj = m
             first_deriv_coefs = polynomial.polyder(self.coefs)
@@ -108,12 +116,12 @@ class Wendland:
 
             term1 = diffs[xi] * diffs[xj] * epsdiv(
                 polynomial.polyval(r, second_deriv_coefs),
-                (self.delta * normed_diff) ** 2
+                (self.delta[xi] * self.delta[xj] * r) ** 2
             )
 
             term2 = - diffs[xi] * diffs[xj] * epsdiv(
                 polynomial.polyval(r, first_deriv_coefs),
-                self.delta * normed_diff ** 3
+                (self.delta[xi] * self.delta[xj]) ** 2 * r ** 3
             )
 
             unsupported = term1 + term2
@@ -121,7 +129,7 @@ class Wendland:
             if xi == xj:
                 unsupported += epsdiv(
                     polynomial.polyval(r, first_deriv_coefs),
-                    self.delta * normed_diff,
+                    self.delta[xi] ** 2 * r
                 )
 
         else:
@@ -135,18 +143,6 @@ class Wendland:
                 w,
                 np.reshape(np.where(1 - r >= 0, unsupported, 0), shape)
             )
-
-    def diff(self, *x):
-        shape = (*np.shape(self.xc[0]), *np.shape(x[0]))
-        x = tuple(map(flatten, x))
-
-        diffs = [
-            np.subtract.outer(x[i], self.xc[i]).T / self.penalty[i]  # .T to put xc on axis 0.
-            for i in range(self.d)
-        ]
-        normed_diff = np.sqrt(np.sum([diff ** 2 for diff in diffs], axis=0))
-
-        return diffs, normed_diff, shape
 
     def grad(self, *x, w=None):
         return np.array([
@@ -172,49 +168,6 @@ class Wendland:
         ], axis=0)
 
 
-class PeriodicWendland(Wendland):
-    def __init__(self, d, k, delta, xc, penalty=None, a=-0.5, b=0.5):
-        super().__init__(d, k, delta, xc, penalty=penalty)
-        self.a = a
-        self.interval = b - a
-
-    def __call__(self, *x, **kwargs):
-        x = [(i - self.a) % self.interval + self.a for i in x]
-        return super().__call__(*x, **kwargs)
-
-
-class TemporalWendland(Wendland):
-    def __init__(self, d, k, delta, txc, penalty=None):
-        super().__init__(d + 1, k, delta, txc, penalty=penalty)
-
-    def __getitem__(self, item):
-        xc = [c[item] for c in self.xc]
-        return self.__class__(self.d - 1, self.k, self.delta, xc)
-
-    def grad(self, *x, w=None):
-        return np.array([
-            self.__call__(*x, w=w, m=i) for i in range(1, self.d)
-        ])
-
-    def hessian(self, *x, w=None):
-        mat = np.zeros((self.d - 1, self.d - 1, *np.shape(x[0])))
-
-        for i in range(1, self.d):
-            mat[i-1, i-1] = self.__call__(*x, w=w, m=(i, i))
-
-            for j in range(i):
-                mat[i-1, j-1] = self.__call__(*x, w=w, m=(i, j))
-                mat[j-1, i-1] = mat[i-1, j-1]
-
-        return mat
-
-    def laplacian(self, *x, w=None):
-        return np.sum([
-            self.__call__(*x, w=w, m=(i, i))
-            for i in range(1, self.d)
-        ], axis=0)
-
-
 class CompositeFunction(list):
     def __init__(self, *args):
         super().__init__(*args)
@@ -233,3 +186,12 @@ class CompositeFunction(list):
 
     def laplacian(self, *x):
         return np.sum([f.laplacian(*x, w=w) for w, f in self], axis=0)
+
+
+class TemporalFunction(list):
+    def __init__(self, phi, *args):
+        super().__init__(*args)
+        self.phi = phi
+
+    def __call__(self, t, *x, m=None):
+        return self.phi(*x, w=self[t], m=m)

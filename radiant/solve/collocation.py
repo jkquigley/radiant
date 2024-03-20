@@ -1,47 +1,31 @@
 from .base import BaseSolver
 import numpy as np
-import scipy as sp
 
 
 class CollocationSolver(BaseSolver):
-    def __init__(self, phi, operators, idx_funcs):
+    def __init__(self, phi, L, Lidx_func, B, Bidx_func):
         super().__init__(phi)
 
-        if len(operators) != len(idx_funcs):
-            raise ValueError(
-                f"Expected {len(operators)} index filters but got "
-                f"{len(idx_funcs)} instead."
-            )
-
-        self.operators = operators
-        self.idxs = [
-            idx_func(phi.xc)
-            if idx_func is not None else None
-            for idx_func in idx_funcs
-        ]
+        self.L = L
+        self.Lidx = Lidx_func(phi.xc)
+        self.B = B
+        self.Bidx = Bidx_func(phi.xc)
 
     def gen_mat(self):
         mat = np.zeros((self.phi.n, self.phi.n))
-        for op, i in zip(self.operators, self.idxs):
-            if not (op is None or i is None):
-                mat[i, :] = op(self.phi[i])(*self.phi.xc)
+
+        mat[self.Lidx, :] = self.L(self.phi[self.Lidx])(*self.phi.xc)
+        mat[self.Bidx, :] = self.B(self.phi[self.Bidx])(*self.phi.xc)
 
         return mat
 
-    def gen_rhs(self, *funcs):
-        if len(funcs) < len(self.operators):
-            raise ValueError(
-                f"Expected {len(self.operators)} or more functions but got "
-                f"{len(funcs)} instead."
-            )
-
-        fs = funcs[:len(self.operators)]
-        gs = funcs[len(self.operators):]
-
+    def gen_rhs(self, f, g, *funcs):
         vec = np.zeros(self.phi.n)
-        for f, op, i in zip(fs, self.operators, self.idxs):
-            if not (f is None or op is None or i is None):
-                xc = [c[i] for c in self.phi.xc]
-                vec[i] = f(*xc) - np.sum([op(g)(*xc) for g in gs], axis=0)
+        vec[self.Lidx] = f(*[c[self.Lidx] for c in self.phi.xc])
+        vec[self.Bidx] = g(*[c[self.Bidx] for c in self.phi.xc])
+
+        for h in funcs:
+            vec[self.Lidx] -= self.L(h)(*[c[self.Lidx] for c in self.phi.xc])
+            vec[self.Bidx] -= self.B(h)(*[c[self.Bidx] for c in self.phi.xc])
 
         return vec

@@ -1,7 +1,6 @@
 __all__ = [
     "CompositeFunction",
-    "PeriodicWendland",
-    "TemporalWendland",
+    "TemporalFunction",
     "Wendland",
     "integrate",
     "solve",
@@ -14,8 +13,7 @@ __all__ = [
 ]
 
 from .function import CompositeFunction
-from .function import PeriodicWendland
-from .function import TemporalWendland
+from .function import TemporalFunction
 from .function import Wendland
 from .integrate import integrate
 from .solve import solve

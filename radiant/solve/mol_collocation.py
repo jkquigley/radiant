@@ -1,43 +1,42 @@
 from .collocation import CollocationSolver
+from ..function import TemporalFunction
+import cupy as cp
 import numpy as np
 
 
 class MOLCollocation(CollocationSolver):
-    def __init__(self, phi, operators, idx_funcs, tf, tn):
-        super().__init__(phi, operators, idx_funcs)
+    def __init__(self, phi, L, Lidx_func, B, Bidx_func, tf, tn):
+        super().__init__(phi, L, Lidx_func, B, Bidx_func)
         self.dt = 1 / tn
         self.tn = int(tn * tf)
 
     def gen_mat(self):
-        return super().gen_mat() @ np.linalg.inv(self.phi(*self.phi.xc))
+        mat = np.zeros((self.phi.n, self.phi.n))
+        mat[self.Lidx, :] = self.phi[self.Lidx](*self.phi.xc) / self.dt
 
-    def solve(self, *funcs):
-        funcs = list(funcs)
-        f = funcs.pop(0)
+        return mat, super().gen_mat()
 
+    def solve(self, f, g, u0):
         if self.mat is None:
             self.mat = self.gen_mat()
 
-        ts = [0.]
-        un = [f(*self.phi.xc)]
+        approx = TemporalFunction(self.phi)
+        approx.append(cp.linalg.solve(
+            cp.array(self.phi(*self.phi.xc)), cp.array(u0(*self.phi.xc))
+        ).get())
 
-        for i in range(1, self.tn):
-            ts.append(ts[-1] + self.dt)
+        lhs = cp.array(self.mat[0] + self.mat[1])
 
-            if i == 1:
-                rhs = np.copy(un[-1])
-                mat = np.eye(*np.shape(self.mat)) - self.dt * self.mat
-            else:
-                rhs = 4 * un[-1] / 3 - un[-2] / 3
-                mat = np.eye(*np.shape(self.mat)) - 2 * self.dt * self.mat / 3
+        for i in range(self.tn):
+            rhs = cp.array(
+                np.matmul(self.mat[0], approx[-1]) + np.where(
+                    self.Lidx,
+                    f(self.dt * i, *self.phi.xc),
+                    g(self.dt * i, *self.phi.xc)
+                )
+            )
+            approx.append(cp.linalg.solve(
+                lhs, rhs
+            ).get())
 
-            for g, idx in zip(funcs, self.idxs[1:]):
-                if idx is None and g == "periodic":
-                    rhs[0] = rhs[-1]
-                else:
-                    xc = [c[idx] for c in self.phi.xc]
-                    rhs[idx] = g(ts[-1], *xc)
-
-            un.append(np.linalg.solve(mat, rhs))
-
-        return un, ts
+        return approx

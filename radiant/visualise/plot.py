@@ -1,5 +1,4 @@
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pylab as plt
 from ..util import gridn
 
@@ -63,18 +62,23 @@ def spread(
             plt.margins(x=0.)
             ax.plot(*x, f(*x))
             ax.set_title(title)
+            ax.set_xlabel('$x$')
+            ax.set_ylabel('$y$')
     elif len(ranges) == 2:
         for i, (f, title) in enumerate(zip(funcs, titles)):
             ax = fig.add_subplot(nrows, ncols, i+1, projection='3d')
             plt.margins(x=0., y=0.)
             ax.plot_surface(*x, f(*x), cmap='spring')
             ax.set_title(title)
+            ax.set_xlabel('$x$')
+            ax.set_ylabel('$y$')
+            ax.set_zlabel('$z$')
     else:
         raise ValueError(f"Cannot plot {len(ranges)} dimensions.")
 
     plt.subplots_adjust(wspace=wspace, hspace=hspace)
     if filename:
-        plt.savefig(filename)
+        plt.savefig(filename, bbox_inches='tight', pad_inches=1.)
     else:
         plt.show()
 
